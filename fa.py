@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from Queue import Queue
+import pdb
 
 from util import unions
 
@@ -36,11 +37,22 @@ class NFANode(BaseNode):
     def __init__(self, **kwargs):
         super(NFANode, self).__init__(next_type=set, **kwargs)
 
+    @property
+    def nexts(self):
+        return unions([self.next[key] for key in self.next.keys()])
+
 
 class DFANode(BaseNode):
 
     def __init__(self, **kwargs):
         super(DFANode, self).__init__(next_type=DFANode, **kwargs)
+
+    @property
+    def nexts(self):
+        """
+        返回可以转移到的下一阶段所有节点组成的list
+        """
+        return [self.next[key] for key in self.next.keys()]
 
 
 class FA(object):
@@ -111,37 +123,79 @@ class NFA(FA):
             if frozenset(tmp) in vis:
                 continue
             dfa_node = DFANode(id=[node.meta["id"] for node in tmp], nfa_set=tmp)
+            #dfa_node = DFANode(nfa_set=tmp)
             vis[frozenset(tmp)] = dfa_node
             print "vis add node:", [node.meta["id"] for node in tmp]
             if dfa.start is None:
                 dfa.start = dfa_node
-            #print tmp
+            print tmp
             print [node.meta["id"] for node in tmp]
-            #print [(node.next.keys(), node.meta["id"], [t.meta["id"] for t in node.next.get("ep", set())]) for node in tmp]
+            print [(node.next.keys(), node.meta["id"], [t.meta["id"] for t in node.next.get("ep", set())]) for node in tmp]
             next_set = unions([set(node.next.keys()) for node in tmp]).difference({"ep"})
             print next_set
             for a in next_set:
                 u = closure(move(tmp, a))
                 if frozenset(u) not in vis:
                     que.put(u)
-                    print "push: ", [node.meta["id"] for node in u]
-                    dfa_node.next[a] = DFANode(id=[node.meta["id"] for node in u])
+                    #print "push: ", [node.meta["id"] for node in u]
+                    #dfa_node.next[a] = DFANode(id=[node.meta["id"] for node in u])
+                    dfa_node.next[a] = DFANode()
                     # 这里直接进行转移会导致重复节点(虽然在最小化的时候可以消除)
         que.put(dfa.start)
+        vis2 = dict()   # 例如a*产生的nfa, 可能会有a弧转换指向自身. 因此需要去重防止无限循环
         while not que.empty():
             tmp = que.get()
-            print tmp.meta["nfa_set"], "nfa_end: ", nfa.end
-            print tmp.meta["nfa_set"] & nfa.end
+            if tmp in vis2:
+                continue
+            vis2[tmp] = 1
+            #print tmp.meta["nfa_set"], "nfa_end: ", nfa.end
+            #print tmp.meta["nfa_set"] & nfa.end
             if tmp.meta["nfa_set"] & nfa.end:
                 tmp.end = True
                 dfa.end.add(tmp)
             next_set = unions([set(node.next.keys()) for node in tmp.meta["nfa_set"]]).difference({"ep"})
             for a in next_set:
-                u = move(tmp.meta["nfa_set"], a)
+                u = closure(move(tmp.meta["nfa_set"], a))
+                #pdb.set_trace()
                 tmp.next[a] = vis[frozenset(u)]
-                print "add ", tmp.meta["id"], "-", a, "-", tmp.next[a].meta["id"]
+                #print "add ", tmp.meta["id"], "-", a, "-", tmp.next[a].meta["id"]
                 que.put(tmp.next[a])
         return dfa
+
+    def draw(self, filename="nfa"):
+        que = Queue()
+        que.put(self.start)
+        vis = dict()
+        cnt = 0
+        while not que.empty():
+            tmp = que.get()
+            if tmp in vis:
+                continue
+            vis[tmp] = 1
+            tmp.meta["id"] = cnt
+            cnt += 1
+            for x in tmp.nexts:
+                que.put(x)
+        que = Queue()
+        que.put(self.start)
+        vis = dict()
+        with open(filename+'.dot', 'wt') as f:
+            f.write('digraph regex_dfa{\nrankdir=LR;\n')
+            while not que.empty():
+                tmp = que.get()
+                if tmp in vis:
+                    continue
+                vis[tmp] = 1
+                if tmp.end:
+                    f.write('\t %d [label=%d, shape=doublecircle]\n' % (tmp.id, tmp.id))
+                else:
+                    f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))
+                for key in tmp.next.keys():
+                    nexts = tmp.next[key]
+                    for u in nexts:
+                        f.write('\t%d-> %d [label="%s"]\n' % (tmp.id, u.id, key))
+                        que.put(u)
+            f.write('}\n')
 
 
 class DFA(FA):
@@ -163,6 +217,41 @@ class DFA(FA):
                 que.put(x)
         print 'end: ', self.end
 
+    def draw(self, filename="dfa"):
+        que = Queue()
+        que.put(self.start)
+        cnt = 0
+        vis = dict()
+        while not que.empty():
+            tmp = que.get()
+            if tmp in vis:
+                continue
+            vis[tmp] = 1
+            tmp.meta["id"] = cnt
+            cnt += 1
+            for x in tmp.nexts:
+                que.put(x)
+        que = Queue()
+        que.put(self.start)
+        vis = dict()
+        with open(filename+'.dot', 'wt') as f:
+            f.write('digraph regex_dfa{\nrankdir=LR;\n')
+            while not que.empty():
+                tmp = que.get()
+                if tmp in vis:
+                    continue
+                vis[tmp] = 1
+                if tmp.end:
+                    f.write('\t %d [label=%d, shape=doublecircle]\n' % (tmp.id, tmp.id))
+                else:
+                    f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))
+                for key in tmp.next.keys():
+                    x = tmp.next[key]
+                    f.write('\t%d-> %d [label="%s"]\n' % (tmp.id, x.id, key))
+                    que.put(x)
+            f.write('}\n')
+
+
 if __name__ == '__main__':
     nfa = NFA()
     nfa.start = NFANode(id=1)
@@ -181,3 +270,4 @@ if __name__ == '__main__':
     dfa = nfa.convert_dfa()
     print dfa.start, dfa.start.next.keys()
     dfa.debug()
+    dfa.draw()
