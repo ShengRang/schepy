@@ -7,7 +7,12 @@ regex表示如下几种: (按顺序递归解析即可满足优先级)
 2. r|s型, L(r|s) = L(r) | L(r)
 3. rs型, L(rs) = L(r)L(s)
 4. r*型, L(r*) = L(r)*
-5. (r)型, L((r)) = L(r), 只调整优先级
+5. r+型, L(r+) = L(r)L(r*)
+6. r?型, L(r?) = L(r) | phi
+7. (r)型, L((r)) = L(r), 只调整优先级
+
+Extend Regex Expression:    (r?, r+型更适合放在基本类型中处理)
+1. [a-c0-3] : (a|b|c|0|1|2|3)
 """
 
 from functools import partial
@@ -23,6 +28,7 @@ class RegexError(Exception):
 class Regex(object):
 
     _cache = {}
+    meta_bases = ["\(", "\)", "\*", "\?", "\+"]
 
     def __init__(self):
         pass
@@ -41,7 +47,7 @@ class Regex(object):
         if pattern[0] == '(' and pattern[-1] == ')':
             cache[pattern] = cls.is_regex(pattern[1:-1])
             return cache[pattern]
-        if pattern[-1] == '*':
+        if pattern[-1] in ['*', '?', '+']:
             cache[pattern] = cls.is_regex(pattern[:-1])
             return cache[pattern]
         for i in range(1, len(pattern)):
@@ -56,15 +62,23 @@ class Regex(object):
         cache[pattern] = False
         return False
 
-
     @classmethod
     def is_base(cls, pattern):
         if len(pattern) == 1:
-            return pattern not in list("()*")
-        return pattern in ["\(", "\)", "\*"]
+            return pattern not in [base[1:] for base in cls.meta_bases]
+        return pattern in cls.meta_bases
+
+    @classmethod
+    def _extend(cls, pattern):
+        """
+        返回拓展regex对应的raw regex exp.
+        如[a-c] -> (a|b|c)
+        """
+
 
 
 is_regex = Regex.is_regex
+is_base = Regex.is_base
 
 
 def compile_nfa(pattern):
@@ -74,7 +88,9 @@ def compile_nfa(pattern):
     """
     print 'compile nfa [%s]' % (pattern, )
     assert isinstance(pattern, str)
-    if len(pattern) == 1:
+    if is_base(pattern):
+        if pattern in Regex.meta_bases:
+            pattern = pattern[1:]
         nfa = NFA()
         enode = NFANode()
         enode.end = True
@@ -138,6 +154,21 @@ def compile_nfa(pattern):
                 node.end = False
             nfa0.end = set()
             return nfa
+        elif pattern[-1] == '+' and is_regex(pattern[:-1]):
+            print 'r+型'
+            nfa0 = compile_nfa(pattern[:-1])
+            for node in nfa0.end:
+                if "ep" not in node.next:
+                    node.next["ep"] = set()
+                node.next["ep"].add(nfa0.start)
+            return nfa0
+        elif pattern[-1] == '?' and is_regex(pattern[:-1]):
+            print 'r?型'
+            nfa0 = compile_nfa(pattern[:-1])
+            if "ep" not in nfa0.start.next:
+                nfa0.start.next["ep"] = set()
+            nfa0.start.next["ep"].update(nfa0.end)
+            return nfa0
         elif pattern[-1] == ')' and pattern[0] == '(' and is_regex(pattern):
             print '(r)型'
             return compile_nfa(pattern[1:-1])
