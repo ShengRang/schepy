@@ -1,8 +1,6 @@
 # coding: utf-8
 
-from collections import defaultdict
 from Queue import Queue
-import pdb
 
 from util import unions
 
@@ -68,6 +66,7 @@ class FA(object):
         self.end = set()
 
 
+#@profile
 def closure(nodes):
     if not isinstance(nodes, set):
         return closure({nodes})
@@ -84,6 +83,7 @@ def closure(nodes):
         return new_nodes
 
 
+#@profile
 def move(t_nodes, a):
     """
     :param t_nodes: T
@@ -108,10 +108,13 @@ class NFA(FA):
     #     #return len(self.node_list)
     #     return self.cnt
 
-    def convert_dfa(self):
+    #@profile
+    def convert_dfa(self, copy_meta=None):
         """
         :return: 与本nfa等价的dfa
         """
+        if copy_meta is None:
+            copy_meta = []
         nfa, dfa = self, DFA()
         vis = dict()
         cur_set = closure(nfa.start)
@@ -125,14 +128,14 @@ class NFA(FA):
             dfa_node = DFANode(id=[node.meta["id"] for node in tmp], nfa_set=tmp)
             #dfa_node = DFANode(nfa_set=tmp)
             vis[frozenset(tmp)] = dfa_node
-            print "vis add node:", [node.meta["id"] for node in tmp]
+            #print "vis add node:", [node.meta["id"] for node in tmp]
             if dfa.start is None:
                 dfa.start = dfa_node
-            print tmp
-            print [node.meta["id"] for node in tmp]
-            print [(node.next.keys(), node.meta["id"], [t.meta["id"] for t in node.next.get("ep", set())]) for node in tmp]
+            #print tmp
+            #print [node.meta["id"] for node in tmp]
+            #print [(node.next.keys(), node.meta["id"], [t.meta["id"] for t in node.next.get("ep", set())]) for node in tmp]
             next_set = unions([set(node.next.keys()) for node in tmp]).difference({"ep"})
-            print next_set
+            #print next_set
             for a in next_set:
                 u = closure(move(tmp, a))
                 if frozenset(u) not in vis:
@@ -150,7 +153,12 @@ class NFA(FA):
             vis2[tmp] = 1
             #print tmp.meta["nfa_set"], "nfa_end: ", nfa.end
             #print tmp.meta["nfa_set"] & nfa.end
-            if tmp.meta["nfa_set"] & nfa.end:
+            intersection = tmp.nfa_set & nfa.end
+            if intersection:
+                for key in copy_meta:
+                    tmp.meta.setdefault(key, [])
+                    tmp.meta[key].extend([node.meta.get(key) for node in intersection ])
+                    print 'append meta: %s: %s' % (key, repr([nend.meta.get(key) for nend in intersection if key in nend.meta]))
                 tmp.end = True
                 dfa.end.add(tmp)
             next_set = unions([set(node.next.keys()) for node in tmp.meta["nfa_set"]]).difference({"ep"})
@@ -161,6 +169,14 @@ class NFA(FA):
                 #print "add ", tmp.meta["id"], "-", a, "-", tmp.next[a].meta["id"]
                 que.put(tmp.next[a])
         return dfa
+
+    @classmethod
+    def combine(cls, *args):
+        res = NFA()
+        res.start.next["ep"] = set()
+        for nfa in args:
+            res.start.next["ep"].add(nfa.start)
+        return res
 
     def draw(self, filename="nfa"):
         que = Queue()
@@ -187,7 +203,7 @@ class NFA(FA):
                     continue
                 vis[tmp] = 1
                 if tmp.end:
-                    f.write('\t %d [label=%d, shape=doublecircle]\n' % (tmp.id, tmp.id))
+                    f.write('\t %d [label="%d %s", shape=doublecircle]\n' % (tmp.id, tmp.id, repr(tmp.meta)))
                 else:
                     f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))
                 for key in tmp.next.keys():
@@ -217,7 +233,7 @@ class DFA(FA):
                 que.put(x)
         print 'end: ', self.end
 
-    def draw(self, filename="dfa"):
+    def draw(self, filename="dfa", show_meta=False):
         que = Queue()
         que.put(self.start)
         cnt = 0
@@ -242,7 +258,10 @@ class DFA(FA):
                     continue
                 vis[tmp] = 1
                 if tmp.end:
-                    f.write('\t %d [label=%d, shape=doublecircle]\n' % (tmp.id, tmp.id))
+                    if show_meta:
+                        f.write('\t %d [label="%d [%s]", shape=doublecircle]\n' % (tmp.id, tmp.id, repr({key: tmp.meta[key] for key in tmp.meta if key != 'nfa_set'})))
+                    else:
+                        f.write('\t %d [label="%d", shape=doublecircle]\n' % (tmp.id, tmp.id))
                 else:
                     f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))
                 for key in tmp.next.keys():

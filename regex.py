@@ -15,10 +15,10 @@ Extend Regex Expression:    (r?, r+型更适合放在基本类型中处理)
 1. [a-c0-3] : (a|b|c|0|1|2|3)
 """
 
-from functools import partial
 from operator import and_
 
-from fa import NFA, DFA, NFANode, DFANode
+from fa import NFA, NFANode
+from util import char_range
 
 
 class RegexError(Exception):
@@ -29,6 +29,7 @@ class Regex(object):
 
     _cache = {}
     meta_bases = ["\(", "\)", "\*", "\?", "\+"]
+    alphabet = char_range('a', 'z') + char_range('A', 'Z') + char_range('0', '9') + ["+", "-", "*", "/"]
 
     def __init__(self):
         pass
@@ -74,8 +75,48 @@ class Regex(object):
         返回拓展regex对应的raw regex exp.
         如[a-c] -> (a|b|c)
         """
+        i = 0
+        tmp = []
+        res = []
+        stat = 0
+        while i < len(pattern):
+            if pattern[i] == '[':
+                i += 1
+                stat = 1
+                tmp = []
+                if i == ']':
+                    i += 1
+                    stat = 0
+                    continue
+            if pattern[i] == ']':
+                i += 1
+                stat = 0
+                res.append("(" + "|".join(tmp) + ")")
+                continue
+            if stat == 1:
+                if pattern[i] == '-':
+                    i += 1
+                    x = tmp.pop()
+                    tmp.extend(char_range(x, pattern[i]))
+                else:
+                    tmp.append(pattern[i])
+                i += 1
+            else:
+                res.append(pattern[i])
+                i += 1
+        return "".join(res)
 
+    @classmethod
+    def compile_nfa(cls, pattern, extend=False):
+        if extend:
+            pattern = cls._extend(pattern)
+        return compile_nfa(pattern)
 
+    @classmethod
+    def compile_dfa(cls, pattern, extend=False):
+        if extend:
+            pattern = cls._extend(pattern)
+        return compile_dfa(pattern)
 
 is_regex = Regex.is_regex
 is_base = Regex.is_base
@@ -173,7 +214,7 @@ def compile_nfa(pattern):
             print '(r)型'
             return compile_nfa(pattern[1:-1])
         else:
-            print 'Excuse me? What the fuck?'
+            print 'Excuse me? What a fucking regex exp?'
             raise RegexError()
 
 
@@ -187,7 +228,11 @@ if __name__ == '__main__':
     #print Regex.is_regex("(*djwjevsfsfsfswsfafasdasdanr3us)")
     #print Regex._cache
     #print len(Regex._cache)
-    nfa = compile_nfa(raw_input())
+    nfa = Regex.compile_nfa(raw_input(), extend=True)
     nfa.draw()
-    dfa = nfa.convert_dfa()
+    for nend in nfa.end:
+        nend.meta["type"] = "expression"
+    print 'nfa done!'
+    dfa = nfa.convert_dfa(copy_meta=["type"])
     dfa.draw()
+    print 'done!'
