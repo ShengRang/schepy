@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from Queue import Queue
+import pdb
 
 from util import unions
 
@@ -157,8 +158,8 @@ class NFA(FA):
             if intersection:
                 for key in copy_meta:
                     tmp.meta.setdefault(key, [])
-                    tmp.meta[key].extend([node.meta.get(key) for node in intersection ])
-                    print 'append meta: %s: %s' % (key, repr([nend.meta.get(key) for nend in intersection if key in nend.meta]))
+                    tmp.meta[key].extend([node.meta.get(key) for node in intersection])
+                    #print 'append meta: %s: %s' % (key, repr([nend.meta.get(key) for nend in intersection if key in nend.meta]))
                 tmp.end = True
                 dfa.end.add(tmp)
             next_set = unions([set(node.next.keys()) for node in tmp.meta["nfa_set"]]).difference({"ep"})
@@ -174,11 +175,13 @@ class NFA(FA):
     def combine(cls, *args):
         res = NFA()
         res.start.next["ep"] = set()
+        res.end = set()
         for nfa in args:
             res.start.next["ep"].add(nfa.start)
+            res.end.update(nfa.end)
         return res
 
-    def draw(self, filename="nfa"):
+    def draw(self, filename="nfa", show_meta=False):
         que = Queue()
         que.put(self.start)
         vis = dict()
@@ -203,7 +206,10 @@ class NFA(FA):
                     continue
                 vis[tmp] = 1
                 if tmp.end:
-                    f.write('\t %d [label="%d %s", shape=doublecircle]\n' % (tmp.id, tmp.id, repr(tmp.meta)))
+                    if show_meta:
+                        f.write('\t %d [label="%d %s", shape=doublecircle]\n' % (tmp.id, tmp.id, repr(tmp.meta)))
+                    else:
+                        f.write('\t %d [label="%d", shape=doublecircle]\n' % (tmp.id, tmp.id))
                 else:
                     f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))
                 for key in tmp.next.keys():
