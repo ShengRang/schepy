@@ -67,7 +67,7 @@ class FA(object):
         self.end = set()
 
 
-#@profile
+# @profile
 def closure(nodes):
     if not isinstance(nodes, set):
         return closure({nodes})
@@ -109,7 +109,7 @@ class NFA(FA):
     #     #return len(self.node_list)
     #     return self.cnt
 
-    #@profile
+    # @profile
     def convert_dfa(self, copy_meta=None):
         """
         :return: 与本nfa等价的dfa

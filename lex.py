@@ -27,7 +27,7 @@ def search(dfa, text, handler):
                 stat = 1
         else:
             """
-            找不到匹配, 如果是
+            找不到匹配
             """
             if cur_node.end:
                 #print '到达终结态'
@@ -47,14 +47,16 @@ def test_handler(token_type, token):
 
 if __name__ == '__main__':
     nfas = []
-    nfas.append(Regex.compile_nfa("[a-f][a-f0-5]*", extend=True, type="identifier"))
+    nfas.append(Regex.compile_nfa("[a-z][a-z0-9]*", extend=True, type="identifier"))
     nfas.append(Regex.compile_nfa("\(", extend=True, type="lpl"))
     nfas.append(Regex.compile_nfa("\)", extend=False, type="rpl"))
     nfas.append(Regex.compile_nfa("(\+|-|\*|/)", type="op"))
     nfas.append(Regex.compile_nfa("[ \t\n]", extend=True, type="limit"))
-    nfas.append(Regex.compile_nfa("[0-5][0-5]*", extend=True, type="number"))
+    nfas.append(Regex.compile_nfa("[0-9][0-9]*", extend=True, type="number"))
     nfa = NFA.combine(*nfas)
     nfa.draw()
     dfa = nfa.convert_dfa(copy_meta=["type"])
     dfa.draw(show_meta=False)
-    search(dfa, raw_input(), test_handler)
+    print 'compile dfa done!'
+    while True:
+        search(dfa, raw_input(), test_handler)

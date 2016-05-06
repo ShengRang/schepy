@@ -14,6 +14,8 @@ regex表示如下几种: (按顺序递归解析即可满足优先级)
 Extend Regex Expression:    (r?, r+型更适合放在基本类型中处理)
 1. [a-c0-3] : (a|b|c|0|1|2|3)
 """
+import crash_on_ipy
+
 
 from operator import and_
 
@@ -39,7 +41,7 @@ class Regex(object):
         if pattern in cls._cache:
             return cls._cache[pattern]
         cache = cls._cache
-        #print 'is_regex: ', pattern
+        print 'is_regex: ', pattern
         if len(pattern) < 1:
             return False
         if cls.is_base(pattern):
@@ -130,7 +132,7 @@ def compile_nfa(pattern):
     :param pattern: 正则
     :return: NFA
     """
-    #print 'compile nfa [%s]' % (pattern, )
+    print 'compile nfa [%s]' % (pattern, )
     assert isinstance(pattern, str)
     if is_base(pattern):
         if pattern in Regex.meta_bases:
@@ -142,7 +144,12 @@ def compile_nfa(pattern):
         nfa.end.add(enode)
         return nfa
     elif 0 < pattern.find('|') and and_(*map(is_regex, pattern.split('|', 1))):
-        #print 'r|s型'
+    # elif 0 < pattern.find('|'):
+    #     pdb.set_trace()
+        # if not and_(*map(is_regex, pattern.split('|', 1))):
+        #     pass
+        # pdb.set_trace()
+        print 'r|s型'
         l = pattern.find('|')
         s1, s2 = pattern[:l], pattern[l+1:]
         nfa1, nfa2 = map(compile_nfa, [s1, s2])
@@ -163,7 +170,7 @@ def compile_nfa(pattern):
         for i in range(1, len(pattern)):
             s1, s2 = pattern[:i], pattern[i:]
             if is_regex(s1) and is_regex(s2):
-                #print 'rs 连接型'
+                print 'rs 连接型'
                 nfa1, nfa2 = map(compile_nfa, [s1, s2])
                 nfa = NFA()
                 snode = nfa.start
@@ -183,7 +190,7 @@ def compile_nfa(pattern):
                 snode.next["ep"] = {nfa1.start}   #虽然我觉得nfa.start = {nfa1.start} 也可以 , 还是按照教材把
                 return nfa
         if pattern[-1] == '*' and is_regex(pattern[:-1]):
-            #print 'r* 型'
+            print 'r* 型'
             nfa0 = compile_nfa(pattern[:-1])
             nfa = NFA()
             snode = nfa.start
@@ -199,7 +206,7 @@ def compile_nfa(pattern):
             nfa0.end = set()
             return nfa
         elif pattern[-1] == '+' and is_regex(pattern[:-1]):
-            #print 'r+型'
+            print 'r+型'
             nfa0 = compile_nfa(pattern[:-1])
             for node in nfa0.end:
                 if "ep" not in node.next:
@@ -207,18 +214,20 @@ def compile_nfa(pattern):
                 node.next["ep"].add(nfa0.start)
             return nfa0
         elif pattern[-1] == '?' and is_regex(pattern[:-1]):
-            #print 'r?型'
+            print 'r?型'
             nfa0 = compile_nfa(pattern[:-1])
             if "ep" not in nfa0.start.next:
                 nfa0.start.next["ep"] = set()
             nfa0.start.next["ep"].update(nfa0.end)
             return nfa0
         elif pattern[-1] == ')' and pattern[0] == '(' and is_regex(pattern):
-            #print '(r)型'
+            print '(r)型'
             return compile_nfa(pattern[1:-1])
         else:
             print 'Excuse me? What a fucking regex exp?'
-            raise RegexError()
+            #print Regex._cache
+            #raise RegexError()
+            raise Exception()
 
 
 def compile_dfa(pattern):
