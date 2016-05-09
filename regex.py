@@ -47,12 +47,6 @@ class Regex(object):
         if cls.is_base(pattern):
             cache[pattern] = True
             return True
-        if pattern[0] == '(' and pattern[-1] == ')':
-            cache[pattern] = cls.is_regex(pattern[1:-1])
-            return cache[pattern]
-        if pattern[-1] in ['*', '?', '+']:
-            cache[pattern] = cls.is_regex(pattern[:-1])
-            return cache[pattern]
         for i in range(1, len(pattern)):
             # print pattern[:i], pattern[i:]
             tmp = cls.is_regex(pattern[:i])
@@ -62,6 +56,12 @@ class Regex(object):
             if cls.is_regex(pattern[i:]) and tmp:
                 cache[pattern] = True
                 return True
+        if pattern[-1] in ['*', '?', '+']:
+            cache[pattern] = cls.is_regex(pattern[:-1])
+            return cache[pattern]
+        if pattern[0] == '(' and pattern[-1] == ')':
+            cache[pattern] = cls.is_regex(pattern[1:-1])
+            return cache[pattern]
         cache[pattern] = False
         return False
 

@@ -126,8 +126,8 @@ class NFA(FA):
             tmp = que.get()
             if frozenset(tmp) in vis:
                 continue
-            dfa_node = DFANode(id=[node.meta["id"] for node in tmp], nfa_set=tmp)
-            #dfa_node = DFANode(nfa_set=tmp)
+            #dfa_node = DFANode(id=[node.meta["id"] for node in tmp], nfa_set=tmp)
+            dfa_node = DFANode(nfa_set=tmp)
             vis[frozenset(tmp)] = dfa_node
             #print "vis add node:", [node.meta["id"] for node in tmp]
             if dfa.start is None:

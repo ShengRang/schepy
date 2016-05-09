@@ -1,9 +1,10 @@
 # coding: utf-8
 
-import regex
-import fa
+import pdb
+
 from regex import Regex
-from fa import NFA
+from fa import NFA, DFA
+from util import bnf_reader
 
 
 def search(dfa, text, handler):
@@ -43,6 +44,36 @@ def search(dfa, text, handler):
 
 def test_handler(token_type, token):
     print '捕获 %s: [%s]' % (token_type, token)
+
+
+class Lex(object):
+    """
+    词法分析
+    """
+
+    def __init__(self):
+        self.lexs = []
+        self.lex_dfa = DFA()
+
+    def read_lex(self, filename):
+        self.lexs = list(bnf_reader(filename))
+
+    def compile(self):
+        nfas = []
+        for le in self.lexs:
+            print le
+            nfas.append(Regex.compile_nfa(le[1], extend=True, type=le[0]))
+        nfa = NFA.combine(*nfas)
+        self.lex_dfa = nfa.convert_dfa(copy_meta=["type"])
+
+    def lex(self, code):
+        tokens = []
+
+        def lex_handler(token_type, token):
+            tokens.append((token_type[0], token))
+
+        search(self.lex_dfa, code, lex_handler)
+        return tokens
 
 
 if __name__ == '__main__':
