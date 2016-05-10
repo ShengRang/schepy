@@ -143,7 +143,10 @@ class NFA(FA):
                     que.put(u)
                     #print "push: ", [node.meta["id"] for node in u]
                     #dfa_node.next[a] = DFANode(id=[node.meta["id"] for node in u])
-                    dfa_node.next[a] = DFANode()
+                    # dfa_node.next[a] = DFANode()
+                    """
+                    似乎上面这行注释了也没事? .. 当时代码写的丑.. 待考证
+                    """
                     # 这里直接进行转移会导致重复节点(虽然在最小化的时候可以消除)
         que.put(dfa.start)
         vis2 = dict()   # 例如a*产生的nfa, 可能会有a弧转换指向自身. 因此需要去重防止无限循环

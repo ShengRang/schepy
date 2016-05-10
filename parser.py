@@ -4,7 +4,7 @@ from collections import defaultdict
 from Queue import Queue
 
 from fa import DFA, DFANode
-from util import bnf_reader
+from util import bnf_reader, frozen_items
 
 
 class SExpNode(object):
@@ -62,15 +62,6 @@ class LRParser(object):
         self.non_terminators.extend([k for k, v in g_out.iteritems() if v])
         # print g_in
         # print g_out
-
-    def compile(self):
-        """
-        利用 self.grammar 编译出dfa, 并构造分析表
-        :return:
-        """
-        dfa = DFA()
-        que = Queue()
-        pass
 
     def get_eps(self):
         """
@@ -202,6 +193,46 @@ class LRParser(object):
                         que.put((B, tuple(), _exp, fst))
         return [core + (head, ) for core, head in vis.iteritems()]
 
+    def compile(self):
+        """
+        利用 self.grammar 编译出dfa, 并构造分析表
+        :return:
+        """
+        alloc = 0
+        grammar = self.grammar
+        dfa = DFA()
+        dfa.start = None
+        que = Queue()
+        que.put(self.closure(("start", tuple(), tuple(grammar["start"][0]), {'$'})))
+        vis = dict()
+        while not que.empty():
+            lr_items = que.get()
+            if frozen_items(lr_items) in vis:
+                continue
+            dfa_node = DFANode(lr_items=lr_items)
+            vis[frozen_items(lr_items)] = dfa_node
+            if not dfa.start:
+                dfa.start = dfa_node
+            for item in lr_items:
+                if item[2]:
+                    u_item = (item[0], item[1] + item[2][:1], item[2][1:], item[3])
+                    u_items = self.closure(u_item)
+                    que.put(u_items)
+        que.put(dfa.start)
+        vis2 = dict()
+        while not que.empty():
+            dfa_node = que.get()
+            if dfa_node in vis2:
+                continue
+            vis2[dfa_node] = 1
+            for item in dfa_node.lr_items:
+                if item[2]:
+                    u_item = (item[0], item[1] + item[2][:1], item[2][1:], item[3])
+                    u_items = self.closure(u_item)
+                    dfa_node.next[item[2][0]] = vis[frozen_items(u_items)]
+                    que.put(vis[frozen_items(u_items)])
+        return dfa
+
     def parser(self):
         pass
 
@@ -224,3 +255,4 @@ if __name__ == "__main__":
     # print l.first(['ep', '$'])
     # print l.first(['A', 'b'])
     print l.closure(("start", tuple(), ("S", ), ['$']))
+    l.compile()

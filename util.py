@@ -43,3 +43,11 @@ def bnf_reader(filename='test.txt'):
                 continue
             line = parse_convert(line).strip()
             yield tuple(line.split(" ::= "))
+
+
+def frozen_item(item):
+    return tuple([item[0], item[1], item[2], frozenset(item[3])])
+
+
+def frozen_items(items):
+    return frozenset([frozen_item(item) for item in items])
