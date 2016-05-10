@@ -91,7 +91,6 @@ class LRParser(object):
             grammar[symbol] = filter(lambda exp: not sum(vt[e] for e in exp), exps) # 删除所有含有终结符的产生式
             if not len(grammar[symbol]):
                 eps[symbol] = False
-        pass
         while sum(len(exps) for exps in grammar.itervalues()):
             # 只要产生式没有被删光就继续
             for symbol, exps in grammar.iteritems():
@@ -155,17 +154,53 @@ class LRParser(object):
         """
         if isinstance(symbols, str):
             return self._first[symbols]
+        if isinstance(symbols, set):
+            symbols = list(symbols)
         if isinstance(symbols, list):
             res = set()
             for i in range(len(symbols)):
                 res.update(self.first(symbols[i]))
-                if symbols[i] in self.terminators:
+                if symbols[i] in self.terminators and symbols[i] != "ep":
                     break
                 if sum(1 for s in symbols[:i] if "ep" in self._first[s]) != i:
                     break
             if "ep" in res and sum(1 for s in symbols if "ep" in self._first[s]) != len(symbols):
                 res.remove("ep")
             return res
+
+    def closure(self, item):
+        """
+        item: 四元组, 表示一个项目("start", (), ("A", ), {'$'}), 即 start ::= 丶 'A', $
+        [A -> α•Bγ, a] -> B in VN , b in First(γa), 都有 ε -> [B -> ▪β, b]
+        :return: 这个item所在的项目集
+        """
+        que = Queue()
+        que.put(item)
+        self._first['$'] = '$'
+        grammar = self.grammar
+        res = []
+        vis = defaultdict(set)
+        while not que.empty():
+            top = que.get()
+            vis[(top[0], top[1], top[2])].update(top[3])
+            # res.append(top)
+            if not top[2]:
+                # 这是一个规约项目, 例如 start -> A•
+                continue
+            B, gama = top[2][0], top[2][1:] or ("ep", )
+            if B not in self.non_terminators:
+                # B 是非终结符才产生转换
+                continue
+            for exp in grammar[B]:
+                _exp = tuple(exp)
+                if _exp == ("ep", ):
+                    _exp = tuple()
+                for a in top[3]:
+                    fst = self.first(list(gama) + [a])
+                    if not fst.issubset(vis[(B, tuple(), _exp)]):   # 如果曾经出现过, 不再入队
+                        vis[(B, tuple(), _exp)].update(fst)
+                        que.put((B, tuple(), _exp, fst))
+        return [core + (head, ) for core, head in vis.iteritems()]
 
     def parser(self):
         pass
@@ -176,9 +211,16 @@ if __name__ == "__main__":
     l.read_grammar("grammar.txt")
     l.calc_first()
     l.get_eps()
+    """
     print l.first("S")
     print l.first(['A', 'B'])
     print l.first(['b', 'C'])
     print l.first(['a', 'D'])
     print l.first(["A", "D"])
     print l.first(['a', 'S'])
+    """
+    # print l.closure(("start", tuple(), ("A", ), {'$'}))
+    print l.closure(("S", ("A", "d"), ("D", ), {'$'}))  #造成无限循环
+    # print l.first(['ep', '$'])
+    # print l.first(['A', 'b'])
+    print l.closure(("start", tuple(), ("S", ), ['$']))

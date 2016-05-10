@@ -41,5 +41,5 @@ def bnf_reader(filename='test.txt'):
         for line in reader:
             if line.startswith('#') or line.find("::=") <= 0:
                 continue
-            line = parse_convert(line)
-            yield tuple(line[:-1].split(" ::= "))
+            line = parse_convert(line).strip()
+            yield tuple(line.split(" ::= "))
