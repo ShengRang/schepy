@@ -30,7 +30,7 @@ class RegexError(Exception):
 class Regex(object):
 
     _cache = {}
-    meta_bases = ["\(", "\)", "\*", "\?", "\+", r"\\", "\|"]
+    meta_bases = [r"\(", r"\)", r"\*", r"\?", r"\+", r"\\", r"\|"]
     alphabet = char_range('a', 'z') + char_range('A', 'Z') + char_range('0', '9') + ["+", "-", "*", "/"]
 
     def __init__(self):

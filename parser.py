@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from collections import defaultdict
+from Queue import Queue
 
 from fa import DFA, DFANode
 from util import bnf_reader
@@ -34,6 +35,11 @@ class LRParser(object):
         self.grammar = defaultdict(list)
         self.terminators = []
         self.non_terminators = []
+        self._first = defaultdict(set)
+
+    @property
+    def alphabet(self):
+        return self.terminators + self.non_terminators
 
     def read_grammar(self, filename):
         """
@@ -63,6 +69,103 @@ class LRParser(object):
         :return:
         """
         dfa = DFA()
+        que = Queue()
+        pass
+
+    def get_eps(self):
+        """
+        返回能推导出 ep 的非终结符
+        """
+        grammar = defaultdict(list)
+        for symbol, exps in self.grammar.iteritems():
+            grammar[symbol] = [[e for e in exp] for exp in exps]
+        eps = dict()
+        vt = {key: 1 for key in self.terminators}
+        vt.update({key: 0 for key in self.non_terminators})
+        for symbol, exps in grammar.iteritems():
+            if filter(lambda exp: len(exp) == 1 and exp[0] == "ep", exps):
+                # 存在 symbol ::= ε , 则标记 True 并删除所有产生式
+                eps[symbol] = True
+                grammar[symbol] = []
+                continue
+            grammar[symbol] = filter(lambda exp: not sum(vt[e] for e in exp), exps) # 删除所有含有终结符的产生式
+            if not len(grammar[symbol]):
+                eps[symbol] = False
+        pass
+        while sum(len(exps) for exps in grammar.itervalues()):
+            # 只要产生式没有被删光就继续
+            for symbol, exps in grammar.iteritems():
+                if not exps:
+                    continue
+                for i in range(len(exps)):
+                    exps[i] = filter(lambda e: not(not vt[e] and eps.get(e, False)), exps[i])
+                if filter(lambda exp: not exp, exps):
+                    grammar[symbol] = []
+                    eps[symbol] = True
+                    continue
+                # grammar[symbol] = filter(lambda exp: not sum(not eps.get(e, True) for e in exp), exps)
+                grammar[symbol] = filter(lambda exp: sum(eps.get(e, True) for e in exp) == len(exp), exps)
+                # 如果右部存在为非空的非终结符, 则删除该产生式
+                if not len(grammar[symbol]):
+                    eps[symbol] = False
+        eps.update(ep=True)
+        eps.update({key: False for key in self.terminators if key != "ep"})
+        return eps
+
+    def calc_first(self):
+        """
+        计算出字母表里所有元素的first集合
+        """
+        first = self._first
+        first.clear()
+        eps = self.get_eps()
+        g_in, g_out = defaultdict(int), defaultdict(int)
+        grap = defaultdict(list) # First集合的邻接表
+        terminators, non_terminators = self.terminators, self.non_terminators
+        grammar = self.grammar
+        for symbol, exps in grammar.iteritems():
+            for exp in exps:
+                for i in range(len(exp)):
+                    if i == sum(eps.get(e, False) for e in exp[:i]):
+                        if exp[i] == "ep":
+                            continue
+                        grap[exp[i]].append(symbol)
+                        g_in[symbol] += 1
+                        g_out[exp[i]] += 1
+        for ter in self.terminators:
+            first[ter].add(ter)
+        stack = [ter for ter in terminators]
+        while len(stack):
+            # 拓扑排序构造first集合, 暂时不管空弧
+            top = stack.pop()
+            for symbol in grap[top]:
+                first[symbol].update(first[top])
+                g_in[symbol] -= 1
+                if g_in[symbol] == 0:
+                    stack.append(symbol)
+        for symbol in first.keys():
+            # 处理空弧
+            if eps.get(symbol, False):
+                first[symbol].add("ep")
+        first["ep"] = {"ep"}
+
+    def first(self, symbols):
+        """
+        :return: 返回first集.
+        """
+        if isinstance(symbols, str):
+            return self._first[symbols]
+        if isinstance(symbols, list):
+            res = set()
+            for i in range(len(symbols)):
+                res.update(self.first(symbols[i]))
+                if symbols[i] in self.terminators:
+                    break
+                if sum(1 for s in symbols[:i] if "ep" in self._first[s]) != i:
+                    break
+            if "ep" in res and sum(1 for s in symbols if "ep" in self._first[s]) != len(symbols):
+                res.remove("ep")
+            return res
 
     def parser(self):
         pass
@@ -71,3 +174,11 @@ class LRParser(object):
 if __name__ == "__main__":
     l = LRParser()
     l.read_grammar("grammar.txt")
+    l.calc_first()
+    l.get_eps()
+    print l.first("S")
+    print l.first(['A', 'B'])
+    print l.first(['b', 'C'])
+    print l.first(['a', 'D'])
+    print l.first(["A", "D"])
+    print l.first(['a', 'S'])
