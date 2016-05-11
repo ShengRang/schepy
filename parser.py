@@ -201,20 +201,18 @@ class LRParser(object):
         alloc = 0
         grammar = self.grammar
         dfa = DFA()
-        dfa.start = None
         que = Queue()
-        que.put(self.closure(("start", tuple(), tuple(grammar["start"][0]), {'$'})))
+        dfa.start = DFANode(lr_items=self.closure(("start", tuple(), tuple(grammar["start"][0]), {'$'})))
+        que.put(dfa.start.lr_items)
         vis = dict()
+        vis[frozen_items(dfa.start.lr_items)] = dfa.start
         while not que.empty():
             lr_items = que.get()
-            if frozen_items(lr_items) in vis:
-                continue
-            dfa_node = DFANode(lr_items=lr_items)
+            # if frozen_items(lr_items) in vis:
+            #     continue
+            dfa_node = vis[frozen_items(lr_items)]
             print 'u_items:'
             print lr_items
-            vis[frozen_items(lr_items)] = dfa_node
-            if not dfa.start:
-                dfa.start = dfa_node
             tmp = defaultdict(list)
             for item in lr_items:
                 if item[2]:
@@ -227,21 +225,13 @@ class LRParser(object):
                     for u_item in u_items:
                         vitem[u_item[:-1]].update(u_item[3])
                 next_items = [core + (head, ) for core, head in vitem.iteritems()]
-                que.put(next_items)
-
-        que.put(dfa.start)
-        vis2 = dict()
-        while not que.empty():
-            dfa_node = que.get()
-            if dfa_node in vis2:
-                continue
-            vis2[dfa_node] = 1
-            for item in dfa_node.lr_items:
-                if item[2]:
-                    u_item = (item[0], item[1] + item[2][:1], item[2][1:], item[3])
-                    u_items = self.closure(u_item)
-                    dfa_node.next[item[2][0]] = vis[frozen_items(u_items)]
-                    que.put(vis[frozen_items(u_items)])
+                if frozen_items(next_items) not in vis:
+                    que.put(next_items)
+                    dfa_node.next[l_hand] = DFANode(lr_items=next_items)
+                    vis[frozen_items(next_items)] = dfa_node.next[l_hand]
+                else:
+                    dfa_node.next[l_hand] = vis[frozen_items(next_items)]
+        # dfa.draw("LR")
         return dfa
 
     def parser(self):
