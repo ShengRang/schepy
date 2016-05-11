@@ -37,6 +37,8 @@ class LRParser(object):
         self.non_terminators = []
         self._first = defaultdict(set)
         self.lr_dfa = None
+        self.lr_table = None
+        self.idx_items = []     # DFA节点项目集索引
 
     @property
     def alphabet(self):
@@ -203,7 +205,8 @@ class LRParser(object):
         grammar = self.grammar
         dfa = DFA()
         que = Queue()
-        dfa.start = DFANode(lr_items=self.closure(("start", tuple(), tuple(grammar["start"][0]), {'$'})))
+        dfa.start = DFANode(id=alloc, lr_items=self.closure(("start", tuple(), tuple(grammar["start"][0]), {'$'})))
+        self.idx_items = [dfa.start]
         que.put(dfa.start.lr_items)
         vis = dict()
         vis[frozen_items(dfa.start.lr_items)] = dfa.start
@@ -229,13 +232,36 @@ class LRParser(object):
                 next_items = [core + (head, ) for core, head in vitem.iteritems()]
                 if frozen_items(next_items) not in vis:
                     que.put(next_items)
-                    dfa_node.next[l_hand] = DFANode(lr_items=next_items)
+                    alloc += 1
+                    dfa_node.next[l_hand] = DFANode(id=alloc, lr_items=next_items)
+                    self.idx_items.append(dfa_node.next[l_hand])        # 插入新节点
                     vis[frozen_items(next_items)] = dfa_node.next[l_hand]
                 else:
                     dfa_node.next[l_hand] = vis[frozen_items(next_items)]
-        dfa.draw("LR", show_meta=["lr_items"])
+        #dfa.draw("LR", show_meta=["lr_items"], generate_id=False)
         self.lr_dfa = dfa
-
+        # DFA 构造完成
+        # 构造分析表
+        lr_table = defaultdict(dict)
+        que = Queue()
+        que.put(dfa.start)
+        vis = dict()
+        while not que.empty():
+            tmp = que.get()
+            if tmp in vis:
+                continue
+            vis[tmp] = 1
+            for item in tmp.lr_items:
+                if item[2]:
+                    # 移进状态
+                    lr_table[tmp.id][item[2][0]] = dict(action="shift", next=tmp.next[item[2][0]].id)
+                else:
+                    # 规约状态
+                    for a in item[3]:
+                        lr_table[tmp.id][a] = dict(action="reduce", grammar=item)
+            for next_node in tmp.next.values():
+                que.put(next_node)
+        self.lr_table = lr_table
         return dfa
 
     def parser(self):
