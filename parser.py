@@ -5,6 +5,7 @@ from Queue import Queue
 
 from fa import DFA, DFANode
 from util import bnf_reader, frozen_items
+from lex import Lex
 
 
 class SExpNode(object):
@@ -201,6 +202,7 @@ class LRParser(object):
         利用 self.grammar 编译出dfa, 并构造分析表
         :return:
         """
+        self.calc_first()
         alloc = 0
         grammar = self.grammar
         dfa = DFA()
@@ -264,8 +266,28 @@ class LRParser(object):
         self.lr_table = lr_table
         return dfa
 
-    def parser(self):
-        pass
+    def parse(self, tokens):
+        print '分析 tokens 流: ', tokens
+        lr_table = self.lr_table
+        stat_stack = [0, ]
+        symbol_stack = ['$', ]
+        input_stack = [('$', '$')] + tokens[::-1]
+        print input_stack
+        while not (stat_stack == [0] and [x[0] for x in input_stack] == ['$', 'start'] and symbol_stack == ['$']):
+            top_stat = stat_stack[-1]
+            top_token_type = input_stack[-1][0]      # 取 token_type
+            # top_token_type = input_stack.pop()[0]       # 取token
+            action = lr_table[top_stat][top_token_type]
+            if action["action"] == "shift":
+                stat_stack.append(action["next"])
+                symbol_stack.append(input_stack.pop()[0])
+            elif action["action"] == "reduce":
+                grammar = action["grammar"]
+                print 'reduce, 利用规则 %s -> %s' % (grammar[0], ''.join(grammar[1]))
+                for _ in range(len(grammar[1])):
+                    stat_stack.pop()
+                    symbol_stack.pop()
+                input_stack.append((grammar[0], 'no-sense'))
 
     def show_dfa(self):
         que = Queue()
@@ -284,10 +306,17 @@ class LRParser(object):
 
 
 if __name__ == "__main__":
-    l = LRParser()
-    l.read_grammar("grammar.txt")
-    l.calc_first()
-    l.get_eps()
+    lexer = Lex()
+    lexer.read_lex("slex.txt")
+    lexer.compile()
+    print '词法分析编译完成'
+    tokens = lexer.lex("db")
+    # print tokens
+    par = LRParser()
+    par.read_grammar("grammar.txt")
+    par.compile()
+    print '语法分析编译完成'
+    par.parse(tokens)
     """
     print l.first("S")
     print l.first(['A', 'B'])
@@ -301,6 +330,6 @@ if __name__ == "__main__":
     # print l.first(['ep', '$'])
     # print l.first(['A', 'b'])
     #print l.closure(("start", tuple(), ("S", ), ['$']))
-    l.compile()
-    l.show_dfa()
+    # l.compile()
+    # l.show_dfa()
     # l.lr_dfa.draw(filename="LR", show_meta=["lr_items", "id"])
