@@ -246,5 +246,5 @@ if __name__ == '__main__':
     print 'nfa done!'
     nfa.draw()
     dfa = nfa.convert_dfa(copy_meta=["type"])
-    dfa.draw(show_meta=True)
+    dfa.draw(show_meta=["id"])
     print 'done!'

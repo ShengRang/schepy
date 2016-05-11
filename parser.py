@@ -233,12 +233,27 @@ class LRParser(object):
                     vis[frozen_items(next_items)] = dfa_node.next[l_hand]
                 else:
                     dfa_node.next[l_hand] = vis[frozen_items(next_items)]
-        # dfa.draw("LR")
+        dfa.draw("LR", show_meta=["lr_items"])
         self.lr_dfa = dfa
         return dfa
 
     def parser(self):
         pass
+
+    def show_dfa(self):
+        que = Queue()
+        vis = dict()
+        que.put(self.lr_dfa.start)
+        while not que.empty():
+            tmp = que.get()
+            if tmp in vis:
+                continue
+            vis[tmp] = 1
+            lr_items = tmp.lr_items
+            tmp.meta["items"] = '\n'.join(['%s -> %s ` %s, %s' % (item[0], ''.join(item[1]), ''.join(item[2]), '/'.join(item[3])) for item in lr_items])
+            for a in tmp.next.keys():
+                que.put(tmp.next[a])
+        self.lr_dfa.draw("LR", show_meta=["items"])
 
 
 if __name__ == "__main__":
@@ -260,3 +275,5 @@ if __name__ == "__main__":
     # print l.first(['A', 'b'])
     print l.closure(("start", tuple(), ("S", ), ['$']))
     l.compile()
+    l.show_dfa()
+    # l.lr_dfa.draw(filename="LR", show_meta=["lr_items", "id"])

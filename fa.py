@@ -242,7 +242,9 @@ class DFA(FA):
                 que.put(x)
         print 'end: ', self.end
 
-    def draw(self, filename="dfa", show_meta=False):
+    def draw(self, filename="dfa", show_meta=None):
+        if not show_meta:
+            show_meta = []
         que = Queue()
         que.put(self.start)
         cnt = 0
@@ -268,11 +270,14 @@ class DFA(FA):
                 vis[tmp] = 1
                 if tmp.end:
                     if show_meta:
-                        f.write('\t %d [label="%d [%s]", shape=doublecircle]\n' % (tmp.id, tmp.id, repr({key: tmp.meta[key] for key in tmp.meta if key != 'nfa_set'})))
+                        f.write('\t %d [label="%d [%s]", shape=doublecircle]\n' % (tmp.id, tmp.id, repr({key: tmp.meta[key] for key in show_meta if key != 'nfa_set'})))
                     else:
                         f.write('\t %d [label="%d", shape=doublecircle]\n' % (tmp.id, tmp.id))
                 else:
-                    f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))
+                    if show_meta:
+                        f.write('\t%d [label="%d %s"]\n' % (tmp.id, tmp.id, repr({key: tmp.meta[key] for key in show_meta if key != 'nfa_set'})))
+                    else:
+                        f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))
                 for key in tmp.next.keys():
                     x = tmp.next[key]
                     f.write('\t%d-> %d [label="%s"]\n' % (tmp.id, x.id, key))
