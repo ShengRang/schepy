@@ -38,10 +38,15 @@ def bnf_reader(filename='test.txt'):
     :return: 返回一个每次迭代得到一行分割之后的二元组的生成器
     """
     with open(filename, 'rt') as reader:
+        comment = False
         for line in reader:
             if line.startswith('#') or line.find("::=") <= 0:
                 continue
             line = parse_convert(line).strip()
+            if line == '"""' or line == "'''":
+                comment = not comment
+            if comment:
+                continue
             yield tuple(line.split(" ::= "))
 
 

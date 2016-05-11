@@ -36,6 +36,7 @@ class LRParser(object):
         self.terminators = []
         self.non_terminators = []
         self._first = defaultdict(set)
+        self.lr_dfa = None
 
     @property
     def alphabet(self):
@@ -211,13 +212,14 @@ class LRParser(object):
             # if frozen_items(lr_items) in vis:
             #     continue
             dfa_node = vis[frozen_items(lr_items)]
-            print 'u_items:'
-            print lr_items
+            # print 'u_items:'
+            # print lr_items
             tmp = defaultdict(list)
             for item in lr_items:
                 if item[2]:
                     u_item = (item[0], item[1] + item[2][:1], item[2][1:], item[3])
                     tmp[item[2][0]].append(u_item)
+                    # 可能该状态有两个以上项目可以通过 item[2][0] 转换到新项目, 而新的项目集应该是他们的合集
             for l_hand, items in tmp.iteritems():
                 vitem = defaultdict(set)
                 for item in items:
@@ -232,6 +234,7 @@ class LRParser(object):
                 else:
                     dfa_node.next[l_hand] = vis[frozen_items(next_items)]
         # dfa.draw("LR")
+        self.lr_dfa = dfa
         return dfa
 
     def parser(self):
