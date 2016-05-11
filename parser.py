@@ -210,14 +210,25 @@ class LRParser(object):
             if frozen_items(lr_items) in vis:
                 continue
             dfa_node = DFANode(lr_items=lr_items)
+            print 'u_items:'
+            print lr_items
             vis[frozen_items(lr_items)] = dfa_node
             if not dfa.start:
                 dfa.start = dfa_node
+            tmp = defaultdict(list)
             for item in lr_items:
                 if item[2]:
                     u_item = (item[0], item[1] + item[2][:1], item[2][1:], item[3])
-                    u_items = self.closure(u_item)
-                    que.put(u_items)
+                    tmp[item[2][0]].append(u_item)
+            for l_hand, items in tmp.iteritems():
+                vitem = defaultdict(set)
+                for item in items:
+                    u_items = self.closure(item)
+                    for u_item in u_items:
+                        vitem[u_item[:-1]].update(u_item[3])
+                next_items = [core + (head, ) for core, head in vitem.iteritems()]
+                que.put(next_items)
+
         que.put(dfa.start)
         vis2 = dict()
         while not que.empty():
