@@ -242,9 +242,7 @@ class DFA(FA):
                 que.put(x)
         print 'end: ', self.end
 
-    def draw(self, filename="dfa", show_meta=None):
-        if not show_meta:
-            show_meta = []
+    def generate_id(self):
         que = Queue()
         que.put(self.start)
         cnt = 0
@@ -258,6 +256,12 @@ class DFA(FA):
             cnt += 1
             for x in tmp.nexts:
                 que.put(x)
+
+    def draw(self, filename="dfa", show_meta=None, generate_id=True):
+        if not show_meta:
+            show_meta = []
+        if generate_id:
+            self.generate_id()
         que = Queue()
         que.put(self.start)
         vis = dict()

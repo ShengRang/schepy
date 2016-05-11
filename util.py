@@ -40,13 +40,14 @@ def bnf_reader(filename='test.txt'):
     with open(filename, 'rt') as reader:
         comment = False
         for line in reader:
-            if line.startswith('#') or line.find("::=") <= 0:
-                continue
             line = parse_convert(line).strip()
             if line == '"""' or line == "'''":
                 comment = not comment
             if comment:
                 continue
+            if line.startswith('#') or line.find("::=") <= 0:
+                continue
+
             yield tuple(line.split(" ::= "))
 
 
