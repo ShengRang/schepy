@@ -66,28 +66,36 @@ class Lex(object):
         nfa = NFA.combine(*nfas)
         self.lex_dfa = nfa.convert_dfa(copy_meta=["type"])
 
-    def lex(self, code):
+    def lex(self, code, ignore=None):
         tokens = []
+        ignore = ignore or []
 
         def lex_handler(token_type, token):
-            tokens.append((token_type[0], token))
+            if token_type[0] not in ignore:
+                tokens.append((token_type[0], token))
 
         search(self.lex_dfa, code, lex_handler)
         return tokens
 
 
 if __name__ == '__main__':
-    nfas = []
-    nfas.append(Regex.compile_nfa("[a-z][a-z0-9]*", extend=True, type="identifier"))
-    nfas.append(Regex.compile_nfa("\(", extend=True, type="lpl"))
-    nfas.append(Regex.compile_nfa("\)", extend=False, type="rpl"))
-    nfas.append(Regex.compile_nfa("(\+|-|\*|/)", type="op"))
-    nfas.append(Regex.compile_nfa("[ \t\n]", extend=True, type="limit"))
-    nfas.append(Regex.compile_nfa("[0-9][0-9]*", extend=True, type="number"))
-    nfa = NFA.combine(*nfas)
-    nfa.draw()
-    dfa = nfa.convert_dfa(copy_meta=["type"])
-    dfa.draw(show_meta=False)
-    print 'compile dfa done!'
+    # nfas = []
+    # nfas.append(Regex.compile_nfa("[a-z][a-z0-9]*", extend=True, type="identifier"))
+    # nfas.append(Regex.compile_nfa("\(", extend=True, type="lpl"))
+    # nfas.append(Regex.compile_nfa("\)", extend=False, type="rpl"))
+    # nfas.append(Regex.compile_nfa("(\+|-|\*|/)", type="op"))
+    # nfas.append(Regex.compile_nfa("[ \t\n]", extend=True, type="limit"))
+    # nfas.append(Regex.compile_nfa("[0-9][0-9]*", extend=True, type="number"))
+    # nfa = NFA.combine(*nfas)
+    # nfa.draw()
+    # dfa = nfa.convert_dfa(copy_meta=["type"])
+    # dfa.draw(show_meta=False)
+    # print 'compile dfa done!'
+    # while True:
+    #     search(dfa, raw_input(), test_handler)
+    l = Lex()
+    l.read_lex("slex.txt")
+    l.compile()
+    print 'compile complete!'
     while True:
-        search(dfa, raw_input(), test_handler)
+        print l.lex(raw_input(), ignore=["limit"])

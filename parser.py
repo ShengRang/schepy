@@ -157,7 +157,7 @@ class LRParser(object):
                 res.update(self.first(symbols[i]))
                 if symbols[i] in self.terminators and symbols[i] != "ep":
                     break
-                if sum(1 for s in symbols[:i] if "ep" in self._first[s]) != i:
+                if sum(1 for s in symbols[:i+1] if "ep" in self._first[s]) != i+1:
                     break
             if "ep" in res and sum(1 for s in symbols if "ep" in self._first[s]) != len(symbols):
                 res.remove("ep")
@@ -240,7 +240,7 @@ class LRParser(object):
                     vis[frozen_items(next_items)] = dfa_node.next[l_hand]
                 else:
                     dfa_node.next[l_hand] = vis[frozen_items(next_items)]
-        #dfa.draw("LR", show_meta=["lr_items"], generate_id=False)
+        # dfa.draw("LR", show_meta=["lr_items"], generate_id=False)
         self.lr_dfa = dfa
         # DFA 构造完成
         # 构造分析表
@@ -306,17 +306,21 @@ class LRParser(object):
 
 
 if __name__ == "__main__":
-    lexer = Lex()
-    lexer.read_lex("slex.txt")
-    lexer.compile()
-    print '词法分析编译完成'
-    tokens = lexer.lex("db")
+    # lexer = Lex()
+    # lexer.read_lex("slex.txt")
+    # lexer.compile()
+    # print '词法分析编译完成'
+    # tokens = lexer.lex("db")
     # print tokens
     par = LRParser()
     par.read_grammar("grammar.txt")
+    par.calc_first()
+    # par.first(["R", "$"])
     par.compile()
+    par.show_dfa()
     print '语法分析编译完成'
-    par.parse(tokens)
+    # while True:
+    #     par.parse(lexer.lex(raw_input(), ignore=["limit"]))
     """
     print l.first("S")
     print l.first(['A', 'B'])

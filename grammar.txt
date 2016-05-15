@@ -18,7 +18,7 @@
 # <D> ::= <a> <S>
 # <D> ::= <c>
 
-'''
+
 <start> ::= <S>
 <S> ::= <A> <d> <D>
 <S> ::= <ep>
@@ -27,15 +27,21 @@
 <D> ::= <D> <d> <A>
 <D> ::= <b>
 <D> ::= <ep>
-'''
+
 '''
 <start> ::= <lexp>
 <lexp> ::= <atom>
 <lexp> ::= <list>
 <atom> ::= <number>
 <atom> ::= <identifier>
-<list> ::= <(> <lexp-seq> <)>
+<list> ::= <lpl> <lexp-seq> <rpl>
 <lexp-seq> ::= <lexp-seq> <lexp>
 <lexp-seq> ::= <lexp>
 '''
-
+'''
+<start> ::= <S>
+<S> ::= <(> <S> <R>
+<S> ::= <a>
+<R> ::= <.> <S> <R>
+<R> ::= <)>
+'''
