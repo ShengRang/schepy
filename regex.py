@@ -53,6 +53,8 @@ class Regex(object):
             if pattern[i] == '|' and tmp and cls.is_regex(pattern[i+1:]):
                 cache[pattern] = True
                 return True
+        for i in range(1, len(pattern)):
+            tmp = cls.is_regex(pattern[:i])
             if cls.is_regex(pattern[i:]) and tmp:
                 cache[pattern] = True
                 return True
@@ -112,6 +114,7 @@ class Regex(object):
     def compile_nfa(cls, pattern, extend=False, **kwargs):
         if extend:
             pattern = cls._extend(pattern)
+            print 'after extend:', pattern
         res = compile_nfa(pattern)
         for node in res.end:
             node.meta.update(kwargs)
@@ -121,6 +124,7 @@ class Regex(object):
     def compile_dfa(cls, pattern, extend=False):
         if extend:
             pattern = cls._extend(pattern)
+        print 'after extend: ', pattern
         return compile_dfa(pattern)
 
 is_regex = Regex.is_regex
@@ -132,7 +136,7 @@ def compile_nfa(pattern):
     :param pattern: 正则
     :return: NFA
     """
-    print 'compile nfa [%s]' % (pattern, )
+    # print 'compile nfa [%s]' % (pattern, )
     assert isinstance(pattern, str)
     if is_base(pattern):
         if pattern in Regex.meta_bases:
@@ -143,91 +147,84 @@ def compile_nfa(pattern):
         nfa.start.next[pattern] = {enode}
         nfa.end.add(enode)
         return nfa
-    elif 0 < pattern.find('|') and and_(*map(is_regex, pattern.split('|', 1))):
-    # elif 0 < pattern.find('|'):
-    #     pdb.set_trace()
-        # if not and_(*map(is_regex, pattern.split('|', 1))):
-        #     pass
-        # pdb.set_trace()
-        print 'r|s型'
-        l = pattern.find('|')
-        s1, s2 = pattern[:l], pattern[l+1:]
-        nfa1, nfa2 = map(compile_nfa, [s1, s2])
-        nfa = NFA()
-        nfa.start.next["ep"] = set()
-        nfa.start.next["ep"].update([nfa1.start, nfa2.start])
-        enode = NFANode()
-        enode.end = True
-        nfa.end.add(enode)
-        for node in nfa1.end | nfa2.end:
-            if "ep" not in node.next:
-                node.next["ep"] = set()
-            node.next["ep"].add(enode)
-            node.end = False
-        nfa1.end, nfa2.end = set(), set()
-        return nfa
-    else:
-        for i in range(1, len(pattern)):
-            s1, s2 = pattern[:i], pattern[i:]
-            if is_regex(s1) and is_regex(s2):
-                print 'rs 连接型'
-                nfa1, nfa2 = map(compile_nfa, [s1, s2])
-                nfa = NFA()
-                snode = nfa.start
-                enode = NFANode()
-                enode.end = True
-                nfa.end = {enode}
-                for node in nfa1.end:
-                    node.end = False
-                    if "ep" not in node.next:
-                        node.next["ep"] = set()
-                    node.next["ep"].add(nfa2.start)
-                for node in nfa2.end:
-                    node.end = False
-                    if "ep" not in node.next:
-                        node.next["ep"] = set()
-                    node.next["ep"].add(enode)
-                snode.next["ep"] = {nfa1.start}   #虽然我觉得nfa.start = {nfa1.start} 也可以 , 还是按照教材把
-                return nfa
-        if pattern[-1] == '*' and is_regex(pattern[:-1]):
-            print 'r* 型'
-            nfa0 = compile_nfa(pattern[:-1])
+    for i in range(1, len(pattern)):
+        s1, s2 = pattern[:i], pattern[i+1:]
+        if pattern[i]=='|' and is_regex(s1) and is_regex(s2):
+            nfa1, nfa2 = map(compile_nfa, [s1, s2])
+            nfa = NFA()
+            nfa.start.next["ep"] = set()
+            nfa.start.next["ep"].update([nfa1.start, nfa2.start])
+            enode = NFANode()
+            enode.end = True
+            nfa.end.add(enode)
+            for node in nfa1.end | nfa2.end:
+                if "ep" not in node.next:
+                    node.next["ep"] = set()
+                node.next["ep"].add(enode)
+                node.end = False
+            nfa1.end, nfa2.end = set(), set()
+            return nfa
+    for i in range(1, len(pattern)):
+        s1, s2 = pattern[:i], pattern[i:]
+        if is_regex(s1) and is_regex(s2):
+            print 'rs 连接型'
+            nfa1, nfa2 = map(compile_nfa, [s1, s2])
             nfa = NFA()
             snode = nfa.start
             enode = NFANode()
             enode.end = True
-            nfa.end.add(enode)
-            snode.next["ep"] = {enode, nfa0.start}
-            for node in nfa0.end:
-                if "ep" not in node.next:
-                    node.next["ep"] = set()
-                node.next["ep"].update([nfa0.start, enode])
+            nfa.end = {enode}
+            for node in nfa1.end:
                 node.end = False
-            nfa0.end = set()
-            return nfa
-        elif pattern[-1] == '+' and is_regex(pattern[:-1]):
-            print 'r+型'
-            nfa0 = compile_nfa(pattern[:-1])
-            for node in nfa0.end:
                 if "ep" not in node.next:
                     node.next["ep"] = set()
-                node.next["ep"].add(nfa0.start)
-            return nfa0
-        elif pattern[-1] == '?' and is_regex(pattern[:-1]):
-            print 'r?型'
-            nfa0 = compile_nfa(pattern[:-1])
-            if "ep" not in nfa0.start.next:
-                nfa0.start.next["ep"] = set()
-            nfa0.start.next["ep"].update(nfa0.end)
-            return nfa0
-        elif pattern[-1] == ')' and pattern[0] == '(' and is_regex(pattern):
-            print '(r)型'
-            return compile_nfa(pattern[1:-1])
-        else:
-            print 'Excuse me? What a fucking regex exp?'
-            #print Regex._cache
-            #raise RegexError()
-            raise Exception()
+                node.next["ep"].add(nfa2.start)
+            for node in nfa2.end:
+                node.end = False
+                if "ep" not in node.next:
+                    node.next["ep"] = set()
+                node.next["ep"].add(enode)
+            snode.next["ep"] = {nfa1.start}   #虽然我觉得nfa.start = {nfa1.start} 也可以 , 还是按照教材把
+            return nfa
+    if pattern[-1] == '*' and is_regex(pattern[:-1]):
+        print 'r* 型'
+        nfa0 = compile_nfa(pattern[:-1])
+        nfa = NFA()
+        snode = nfa.start
+        enode = NFANode()
+        enode.end = True
+        nfa.end.add(enode)
+        snode.next["ep"] = {enode, nfa0.start}
+        for node in nfa0.end:
+            if "ep" not in node.next:
+                node.next["ep"] = set()
+            node.next["ep"].update([nfa0.start, enode])
+            node.end = False
+        nfa0.end = set()
+        return nfa
+    elif pattern[-1] == '+' and is_regex(pattern[:-1]):
+        print 'r+型'
+        nfa0 = compile_nfa(pattern[:-1])
+        for node in nfa0.end:
+            if "ep" not in node.next:
+                node.next["ep"] = set()
+            node.next["ep"].add(nfa0.start)
+        return nfa0
+    elif pattern[-1] == '?' and is_regex(pattern[:-1]):
+        print 'r?型'
+        nfa0 = compile_nfa(pattern[:-1])
+        if "ep" not in nfa0.start.next:
+            nfa0.start.next["ep"] = set()
+        nfa0.start.next["ep"].update(nfa0.end)
+        return nfa0
+    elif pattern[-1] == ')' and pattern[0] == '(' and is_regex(pattern):
+        print '(r)型'
+        return compile_nfa(pattern[1:-1])
+    else:
+        print 'Excuse me? What a fucking regex exp?'
+        #print Regex._cache
+        #raise RegexError()
+        raise Exception()
 
 
 def compile_dfa(pattern):
