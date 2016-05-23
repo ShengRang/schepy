@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import pdb
+from collections import defaultdict
 
 from regex import Regex
 from fa import NFA, DFA
@@ -56,15 +57,30 @@ class Lex(object):
         self.lex_dfa = DFA()
 
     def read_lex(self, filename):
-        self.lexs = list(bnf_reader(filename))
+        self.lexs = bnf_reader(filename)
 
-    def compile(self):
-        nfas = []
-        for le in self.lexs:
-            print le
-            nfas.append(Regex.compile_nfa(le[1], extend=True, type=le[0]))
-        nfa = NFA.combine(*nfas)
-        self.lex_dfa = nfa.convert_dfa(copy_meta=["type"])
+    def compile(self, grammar_type="regex"):
+        """
+        根据文法类型进行编译, 产生dfa. regex 表示 正则表达式, regular 表示 正规文法
+        :param grammar: 文法类型
+        :return:
+        """
+        if grammar_type == 'regex':
+            nfas = []
+            for le in self.lexs:
+                print le
+                nfas.append(Regex.compile_nfa(le[1], extend=True, type=le[0]))
+            nfa = NFA.combine(*nfas)
+            self.lex_dfa = nfa.convert_dfa(copy_meta=["type"])
+            return
+        elif grammar_type == "regular":
+            """
+            本来没有想到会做三型文法解析, 由于parser里也有文法解析.. 此处应该跟那边合并..
+            """
+            nfas = []
+            grammar = defaultdict(list)
+            for l_hand, r_hand in self.lexs:
+                pass
 
     def lex(self, code, ignore=None):
         tokens = []
@@ -94,7 +110,7 @@ if __name__ == '__main__':
     # while True:
     #     search(dfa, raw_input(), test_handler)
     l = Lex()
-    l.read_lex("slex.txt")
+    l.read_lex("regex_lex.txt")
     l.compile()
     print 'compile complete!'
     while True:

@@ -71,17 +71,17 @@ class FA(object):
 def closure(nodes):
     if not isinstance(nodes, set):
         return closure({nodes})
-    s1 = unions([node.next.get("ep", set()) for node in nodes])
-    #print [s.meta["id"] for s in s1]
-    new_nodes = nodes.union(s1)
-    #print [s.meta["id"] for s in new_nodes]
-    s2 = new_nodes.difference(nodes)
-    #print [s.meta["id"] for s in s2]
-    if len(s2):
-        # nodes集合通过空弧转换得到新的状态.
-        return closure(new_nodes)
-    else:
-        return new_nodes
+    que = Queue()
+    for node in nodes:
+        que.put(node)
+    res = set(nodes)
+    while not que.empty():
+        t = que.get()
+        for x in t.next.get("ep", set()):
+            if x not in res:
+                res.add(x)
+                que.put(x)
+    return res
 
 
 #@profile
@@ -126,28 +126,15 @@ class NFA(FA):
             tmp = que.get()
             if frozenset(tmp) in vis:
                 continue
-            #dfa_node = DFANode(id=[node.meta["id"] for node in tmp], nfa_set=tmp)
             dfa_node = DFANode(nfa_set=tmp)
             vis[frozenset(tmp)] = dfa_node
-            #print "vis add node:", [node.meta["id"] for node in tmp]
             if dfa.start is None:
                 dfa.start = dfa_node
-            #print tmp
-            #print [node.meta["id"] for node in tmp]
-            #print [(node.next.keys(), node.meta["id"], [t.meta["id"] for t in node.next.get("ep", set())]) for node in tmp]
             next_set = unions([set(node.next.keys()) for node in tmp]).difference({"ep"})
-            #print next_set
             for a in next_set:
                 u = closure(move(tmp, a))
                 if frozenset(u) not in vis:
                     que.put(u)
-                    #print "push: ", [node.meta["id"] for node in u]
-                    #dfa_node.next[a] = DFANode(id=[node.meta["id"] for node in u])
-                    # dfa_node.next[a] = DFANode()
-                    """
-                    似乎上面这行注释了也没事? .. 当时代码写的丑.. 待考证
-                    """
-                    # 这里直接进行转移会导致重复节点(虽然在最小化的时候可以消除)
         que.put(dfa.start)
         vis2 = dict()   # 例如a*产生的nfa, 可能会有a弧转换指向自身. 因此需要去重防止无限循环
         while not que.empty():
@@ -155,22 +142,17 @@ class NFA(FA):
             if tmp in vis2:
                 continue
             vis2[tmp] = 1
-            #print tmp.meta["nfa_set"], "nfa_end: ", nfa.end
-            #print tmp.meta["nfa_set"] & nfa.end
             intersection = tmp.nfa_set & nfa.end
             if intersection:
                 for key in copy_meta:
                     tmp.meta.setdefault(key, [])
                     tmp.meta[key].extend([node.meta.get(key) for node in intersection])
-                    #print 'append meta: %s: %s' % (key, repr([nend.meta.get(key) for nend in intersection if key in nend.meta]))
                 tmp.end = True
                 dfa.end.add(tmp)
             next_set = unions([set(node.next.keys()) for node in tmp.meta["nfa_set"]]).difference({"ep"})
             for a in next_set:
                 u = closure(move(tmp.meta["nfa_set"], a))
-                #pdb.set_trace()
                 tmp.next[a] = vis[frozenset(u)]
-                #print "add ", tmp.meta["id"], "-", a, "-", tmp.next[a].meta["id"]
                 que.put(tmp.next[a])
         return dfa
 

@@ -288,6 +288,7 @@ class LRParser(object):
                     stat_stack.pop()
                     symbol_stack.pop()
                 input_stack.append((grammar[0], 'no-sense'))
+        print '规约成功, 符合语法规则!'
 
     def show_dfa(self):
         que = Queue()
@@ -306,12 +307,10 @@ class LRParser(object):
 
 
 if __name__ == "__main__":
-    # lexer = Lex()
-    # lexer.read_lex("slex.txt")
-    # lexer.compile()
-    # print '词法分析编译完成'
-    # tokens = lexer.lex("db")
-    # print tokens
+    lexer = Lex()
+    lexer.read_lex("regex_lex.txt")
+    lexer.compile()
+    print '词法分析编译完成'
     par = LRParser()
     par.read_grammar("grammar.txt")
     par.calc_first()
@@ -319,8 +318,8 @@ if __name__ == "__main__":
     par.compile()
     par.show_dfa()
     print '语法分析编译完成'
-    # while True:
-    #     par.parse(lexer.lex(raw_input(), ignore=["limit"]))
+    while True:
+        par.parse(lexer.lex(raw_input(), ignore=["limit"]))
     """
     print l.first("S")
     print l.first(['A', 'B'])
