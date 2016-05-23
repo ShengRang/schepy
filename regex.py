@@ -238,8 +238,6 @@ if __name__ == '__main__':
     #print Regex._cache
     #print len(Regex._cache)
     nfa = Regex.compile_nfa(raw_input(), extend=True)
-    for nend in nfa.end:
-        nend.meta["type"] = "expression"
     print 'nfa done!'
     nfa.draw()
     dfa = nfa.convert_dfa(copy_meta=["type"])

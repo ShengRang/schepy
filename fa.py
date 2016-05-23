@@ -4,6 +4,9 @@ from Queue import Queue
 import pdb
 
 from util import unions
+import crash_on_ipy
+
+crash_on_ipy.init()
 
 
 class BaseNode(object):
@@ -109,7 +112,6 @@ class NFA(FA):
     #     #return len(self.node_list)
     #     return self.cnt
 
-    # @profile
     def convert_dfa(self, copy_meta=None):
         """
         :return: 与本nfa等价的dfa
@@ -119,41 +121,30 @@ class NFA(FA):
         nfa, dfa = self, DFA()
         vis = dict()
         cur_set = closure(nfa.start)
+        dfa.start = DFANode(nfa_set=cur_set)
+        vis[frozenset(cur_set)] = dfa.start
         que = Queue()
         que.put(cur_set)
-        dfa.start = None
         while not que.empty():
             tmp = que.get()
-            if frozenset(tmp) in vis:
-                continue
-            dfa_node = DFANode(nfa_set=tmp)
-            vis[frozenset(tmp)] = dfa_node
-            if dfa.start is None:
-                dfa.start = dfa_node
+            dfa_node = vis[frozenset(tmp)]
             next_set = unions([set(node.next.keys()) for node in tmp]).difference({"ep"})
             for a in next_set:
                 u = closure(move(tmp, a))
                 if frozenset(u) not in vis:
                     que.put(u)
-        que.put(dfa.start)
-        vis2 = dict()   # 例如a*产生的nfa, 可能会有a弧转换指向自身. 因此需要去重防止无限循环
-        while not que.empty():
-            tmp = que.get()
-            if tmp in vis2:
-                continue
-            vis2[tmp] = 1
-            intersection = tmp.nfa_set & nfa.end
-            if intersection:
-                for key in copy_meta:
-                    tmp.meta.setdefault(key, [])
-                    tmp.meta[key].extend([node.meta.get(key) for node in intersection])
-                tmp.end = True
-                dfa.end.add(tmp)
-            next_set = unions([set(node.next.keys()) for node in tmp.meta["nfa_set"]]).difference({"ep"})
-            for a in next_set:
-                u = closure(move(tmp.meta["nfa_set"], a))
-                tmp.next[a] = vis[frozenset(u)]
-                que.put(tmp.next[a])
+                    dfa_node.next[a] = DFANode(nfa_set=u)
+                    next_node = dfa_node.next[a]
+                    intersection = nfa.end & u
+                    if intersection:
+                        for key in copy_meta:
+                            next_node.meta.setdefault(key, [])
+                            next_node.meta[key].extend([node.meta.get(key) for node in intersection])
+                        next_node.end = True
+                        dfa.end.add(next_node)
+                    vis[frozenset(u)] = dfa_node.next[a]
+                else:
+                    dfa_node.next[a] = vis[frozenset(u)]
         return dfa
 
     @classmethod
