@@ -11,6 +11,9 @@
 <number_tail> ::= <ep>
 <number_tail> ::= <0> | <1> | <2> | <3> | <4> | <5> | <6> | <7> | <8> | <9>
 
+<number_tail> ::= <0> <number_tail> | <1> <number_tail> | <2> <number_tail> | <3> <number_tail> | <4> <number_tail>
+<number_tail> ::= <5> <number_tail> | <6> <number_tail> | <7> <number_tail> | <8> <number_tail> | <9> <number_tail>
+
 <identifier> ::= <a> <id_tail> | <b> <id_tail> | <c> <id_tail> | <d> <id_tail> | <e> <id_tail> | <f> <id_tail>
 <identifier> ::= <A> <id_tail> | <B> <id_tail> | <C> <id_tail> | <D> <id_tail> | <E> <id_tail> | <F> <id_tail>
 <identifier> ::= <g> <id_tail> | <h> <id_tail> | <i> <id_tail> | <j> <id_tail> | <k> <id_tail> | <l> <id_tail> | <m> <id_tail>

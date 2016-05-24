@@ -6,7 +6,7 @@
 (+ 137 349)                     ; 组合式
 (+ (* 3 5) (- 10 6))            ; 组合式
 (define size 2)                 ; 定义, 将2与size相关联
-(define (square x) (* x x))     ; 复合过程   (define (<name> <formal parameters>) <body>)
+## (define (square x) (* x x))     ; 复合过程   (define (<name> <formal parameters>) <body>)
 (square 21)                     ; 使用过程
 (define (sum-of-squares x y)    ; 复合过程
     (+ (square x) (square y)))
@@ -19,4 +19,7 @@
     (cond ((> x 0) x)           ; 条件表达式
           ((= x 0) 0)
           ((< x 0) (- x))))
+
+(if (> x 0) (define y x) 2)     ; if表达式 (if test-expr then-expr else-expr) (这个还是用函数实现比较好)
+(lambda (x) (+ x 5))            ; lambda表达式 (lambda kw-formals body ...+)
 

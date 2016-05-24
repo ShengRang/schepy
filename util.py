@@ -37,7 +37,7 @@ def bnf_reader(filename='test.txt'):
     :param filename: 文件名
     :return: 返回一个每次迭代得到一行分割之后的二元组的生成器
     """
-    with open(filename, 'rt') as reader:
+    with open(filename) as reader:
         comment = False
         for line in reader:
             line = parse_convert(line).strip()
@@ -52,8 +52,16 @@ def bnf_reader(filename='test.txt'):
 
 
 def frozen_item(item):
+    """
+    :param item: 项目
+    :return:可hash项目
+    """
     return tuple([item[0], item[1], item[2], frozenset(item[3])])
 
 
 def frozen_items(items):
+    """
+    :param items: 项目集
+    :return: 可hash项目集
+    """
     return frozenset([frozen_item(item) for item in items])
