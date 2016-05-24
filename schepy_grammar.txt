@@ -1,0 +1,31 @@
+# 空格是meta char, 不能出现在< >之间
+# 约定 <start> 表示扩展文法的 S'
+# 约定 ep 表示 ε
+# 终结符通过出度为0, 入度不为0来判断
+
+<start> ::= <lexp>
+<lexp> ::= <atom>
+<lexp> ::= <list>
+<lexp> ::= <s-exp>
+<lexp> ::= <lambda-exp>
+
+# 原子可以是数字, symbol, 字符串
+<atom> ::= <number>
+<atom> ::= <symbol>
+<atom> ::= <string>
+
+# <symbol> ::= <func>   # 感觉即使是函数也应该绑定一个symbol(例如lambda表达式没绑定也不算symbol)才算是symbol
+<symbol> ::= <identifier>
+
+<list> ::= <lpl> <lexp-seq> <rpl>
+
+<s-exp> ::= <lpl> <func> <lexp-seq> <rpl>
+<func> ::= <identifier>
+<func> ::= <op>
+<func> ::= <lambda-exp>
+<lexp-seq> ::= <lexp-seq> <lexp>
+<lexp-seq> ::= <lexp>
+
+<lambda-exp> ::= <lpl> <lambda> <lpl> <args> <rpl> <lexp> <rpl>
+<args> ::= <identifier>
+<args> ::= <identifier> <args>

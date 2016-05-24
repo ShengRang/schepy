@@ -55,6 +55,7 @@ class Lex(object):
     def __init__(self):
         self.lexs = []
         self.lex_dfa = DFA()
+        self.keyword = ['lambda']
 
     def read_lex(self, filename):
         self.lexs = bnf_reader(filename)
@@ -142,7 +143,10 @@ class Lex(object):
 
         def lex_handler(token_type, token):
             if token_type[0] not in ignore:
-                tokens.append((token_type[0], token))
+                if token in self.keyword:
+                    tokens.append((token, token))
+                else:
+                    tokens.append((token_type[0], token))
 
         search(self.lex_dfa, code, lex_handler)
         return tokens

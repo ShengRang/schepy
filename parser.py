@@ -286,7 +286,7 @@ class LRParser(object):
                 symbol_stack.append(input_stack.pop()[0])
             elif action["action"] == "reduce":
                 grammar = action["grammar"]
-                print 'reduce, 利用规则 %s -> %s' % (grammar[0], ''.join(grammar[1]))
+                print 'reduce, 利用规则 %s -> %s' % (grammar[0], ' '.join(grammar[1]))
                 for _ in range(len(grammar[1])):
                     stat_stack.pop()
                     symbol_stack.pop()
