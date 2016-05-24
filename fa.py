@@ -251,7 +251,7 @@ class DFA(FA):
                     else:
                         f.write('\t %d [label="%d", shape=doublecircle]\n' % (tmp.id, tmp.id))
                 else:
-                    if show_meta:
+                    if show_meta and len(show_meta) == sum(1 for m in show_meta if m in tmp.meta):
                         f.write('\t%d [label="%d %s"]\n' % (tmp.id, tmp.id, repr({key: tmp.meta[key] for key in show_meta if key != 'nfa_set'})))
                     else:
                         f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))

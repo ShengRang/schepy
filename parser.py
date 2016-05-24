@@ -267,6 +267,9 @@ class LRParser(object):
         return dfa
 
     def parse(self, tokens):
+        """
+        接受token流, 并进行规约
+        """
         print '分析 tokens 流: ', tokens
         lr_table = self.lr_table
         stat_stack = [0, ]
@@ -291,6 +294,9 @@ class LRParser(object):
         print '规约成功, 符合语法规则!'
 
     def show_dfa(self):
+        """
+        输出编译好的dfa, dot格式
+        """
         que = Queue()
         vis = dict()
         que.put(self.lr_dfa.start)

@@ -2,9 +2,10 @@
 
 import pdb
 from collections import defaultdict
+from Queue import Queue
 
 from regex import Regex
-from fa import NFA, DFA
+from fa import NFA, DFA, NFANode, DFANode
 from util import bnf_reader
 
 
@@ -20,7 +21,6 @@ def search(dfa, text, handler):
     cur_node = dfa.start
     stat = 0    # 1: 已经到达过终结状态, 0: 尚未到达过终结态
     while i < len(text):
-        #print 'cur_node: %s, char: %s' % (repr({key: cur_node.meta[key] for key in cur_node.meta if key != 'nfa_set'}), text[i])
         if text[i] in cur_node.next:
             cur_token.append(text[i])
             cur_node = cur_node.next[text[i]]
@@ -79,8 +79,62 @@ class Lex(object):
             """
             nfas = []
             grammar = defaultdict(list)
+            g_in, g_out = defaultdict(int), defaultdict(int)
+            all_symbol = set()
             for l_hand, r_hand in self.lexs:
-                pass
+                l_hand = l_hand[1:-1]
+                r_hands = [[x[1:-1] for x in r.strip().split()] for r in r_hand.split('|')]
+                for hand in r_hands:
+                    for h in hand:
+                        g_in[h] += 1
+                        all_symbol.add(h)
+                g_out[l_hand] += 1
+                all_symbol.add(l_hand)
+                grammar[l_hand].extend(r_hands)
+            grammar['limit'] = [[' '], ['\t'], ['\n']]
+            ter, not_ter = [], []
+            for sym in all_symbol:
+                if g_in[sym] == 0:
+                    not_ter.append(sym)
+                if g_out[sym] == 0:
+                    ter.append(sym)
+            print ter, not_ter
+            nfas = []
+            for token_type in not_ter:
+                nfa = NFA()
+                nfa.start = NFANode(r_name=token_type)
+                end_node = NFANode(type=token_type)
+                end_node.end = True
+                nfa.end = {end_node}
+                vis = {token_type: nfa.start}
+
+                def get_node(name):
+                    if name in vis:
+                        return vis[name]
+                    vis[name] = NFANode(r_name=name)
+                    return vis[name]
+
+                que = Queue()
+                que.put(token_type)
+                while not que.empty():
+                    t = que.get()
+                    node = get_node(t)
+                    if node.meta.get('vis', 0) > 0:
+                        continue
+                    node.meta['vis'] = node.meta.get('vis', 0) + 1
+                    for r_hand in grammar[t]:
+                        node.next.setdefault(r_hand[0], set())
+                        if len(r_hand) == 2:
+                            node.next[r_hand[0]].add(get_node(r_hand[1]))
+                            que.put(r_hand[1])
+                        else:
+                            node.next[r_hand[0]].add(end_node)
+                nfas.append(nfa)
+            nfa = NFA.combine(*nfas)
+            nfa.draw("regular", show_meta=True)
+            self.lex_dfa = nfa.convert_dfa(copy_meta=["type"])
+            self.lex_dfa.draw(show_meta=["type"])
+            return
 
     def lex(self, code, ignore=None):
         tokens = []
@@ -109,9 +163,17 @@ if __name__ == '__main__':
     # print 'compile dfa done!'
     # while True:
     #     search(dfa, raw_input(), test_handler)
+
+
+    # l = Lex()
+    # l.read_lex("regex_lex.txt")
+    # l.compile()
+    # print 'compile complete!'
+    # while True:
+    #     print l.lex(raw_input(), ignore=["limit"])
+
     l = Lex()
-    l.read_lex("regex_lex.txt")
-    l.compile()
-    print 'compile complete!'
+    l.read_lex("regular_lex.txt")
+    l.compile(grammar_type="regular")
     while True:
         print l.lex(raw_input(), ignore=["limit"])
