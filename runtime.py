@@ -11,6 +11,13 @@ from functools import partial
 from util import colorful
 
 
+class BuildIn(object):
+
+    @staticmethod
+    def mul(args):
+        return reduce(op.mul, args, 1)
+
+
 def define(env, symbol, exp):
     pass
 
@@ -32,7 +39,7 @@ class Env(dict):
         env = Env()
         env.update(vars(math))
         env.update({
-            '+': sum, '-': op.sub, '*': op.mul, '/': op.div,
+            '+': sum, '-': op.sub, '*': BuildIn.mul, '/': op.div,
             '>': op.gt, '<': op.lt, '>=': op.ge, '<=': op.le, '=': op.eq,
             'abs':     abs,
             'append':  op.add,
@@ -150,7 +157,7 @@ class SExp(object):
                 self.value = first + [self.child[1].calc_value(env), ]
             else:
                 self.value = self.child[0].calc_value(env)
-            print 'this lexp-seq:', self.value
+            # print 'this lexp-seq:', self.value
         elif self.stype == 'list':
             # 一致性处理, lexp-seq 已经做了list处理
             self.value = self.child[1].calc_value(env)
