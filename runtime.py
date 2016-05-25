@@ -85,7 +85,7 @@ class ParseHandler(object):
         """
         规约动作, grammar为规约用的产身世
         """
-        print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
+        # print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
         if grammar[0] == 'start':
             self.ast = self.exps[0]
             return
@@ -140,18 +140,25 @@ class SExp(object):
         elif self.stype == 'lexp':
             self.value = self.child[0].calc_value(env)
         elif self.stype == 'lexp-seq':
+            # ..蜜汁处理. 很重要
+            # 对于 lexp-seq -> lexp, 不转list
+            # 对于lexp-seq -> lexp-seq lexp, 第二个转list. 如果第一个是lexp-seq -> lexp-seq lexp型, 不转list, 否则转
             if len(self.child) > 1:
-                self.value = self.child[0].calc_value(env) + [self.child[1].calc_value(env), ]
+                first = [self.child[0].calc_value(env)]
+                if len(self.child[0].child) > 1:
+                    first = first[0]
+                self.value = first + [self.child[1].calc_value(env), ]
             else:
-                self.value = [self.child[0].calc_value(env), ]
+                self.value = self.child[0].calc_value(env)
             print 'this lexp-seq:', self.value
         elif self.stype == 'list':
+            # 一致性处理, lexp-seq 已经做了list处理
             self.value = self.child[1].calc_value(env)
         elif self.stype == 's-exp':
             func = self.child[1].calc_value(env)
             args = self.child[2].calc_value(env)
-            print func
-            print args
+            # print func
+            # print args
             self.value = func(args)
         elif self.stype == 'lambda':
             pass
