@@ -1,10 +1,13 @@
 # 词法的三型文法版本
 
 <limit> ::= < > | <\t> | <\n>
-<op> ::= <+> | <-> | <*> | </>
+<op> ::= <+> | <-> | <*> | </> | <=>
 
 <lpl> ::= <(>
 <rpl> ::= <)>
+
+<lsb> ::= <[>
+<rsb> ::= <]>
 
 <number> ::= <0> <number_tail> | <1> <number_tail> | <2> <number_tail> | <3> <number_tail> | <4> <number_tail>
 <number> ::= <5> <number_tail> | <6> <number_tail> | <7> <number_tail> | <8> <number_tail> | <9> <number_tail>

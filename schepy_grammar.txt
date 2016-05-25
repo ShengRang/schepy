@@ -11,13 +11,13 @@
 
 # 原子可以是数字, symbol, 字符串
 <atom> ::= <number>
-<atom> ::= <symbol>
+<atom> ::= <identifier>
 <atom> ::= <string>
 
 # <symbol> ::= <func>   # 感觉即使是函数也应该绑定一个symbol(例如lambda表达式没绑定也不算symbol)才算是symbol
-<symbol> ::= <identifier>
+#<symbol> ::= <identifier>
 
-<list> ::= <lpl> <lexp-seq> <rpl>
+<list> ::= <[> <lexp-seq> <]>
 
 <s-exp> ::= <lpl> <func> <lexp-seq> <rpl>
 <func> ::= <identifier>

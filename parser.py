@@ -8,23 +8,6 @@ from util import bnf_reader, frozen_items
 from lex import Lex
 
 
-class SExpNode(object):
-    """
-    stype: 类型, 如"op", "number"
-    value: 值, 如"+", "6"
-    child: 子节点的list
-    parent: 父节点
-    """
-    def __init__(self, stype="", value="", parent=None):
-        self.stype = stype
-        self._value = value
-        self.child = []
-        self.parent = parent
-
-    def ddd(self):
-        pass
-
-
 class LRParser(object):
     """
     LR语法分析器, 接受token流, 分析出语法树 (所以tokens应该不是parser的一部分)
@@ -266,7 +249,7 @@ class LRParser(object):
         self.lr_table = lr_table
         return dfa
 
-    def parse(self, tokens):
+    def parse(self, tokens, handler):
         """
         接受token流, 并进行规约
         """
@@ -283,10 +266,13 @@ class LRParser(object):
             action = lr_table[top_stat][top_token_type]
             if action["action"] == "shift":
                 stat_stack.append(action["next"])
+                if input_stack[-1][1] != 'no-sense':
+                    handler.shift(input_stack[-1])
                 symbol_stack.append(input_stack.pop()[0])
             elif action["action"] == "reduce":
                 grammar = action["grammar"]
-                print 'reduce, 利用规则 %s -> %s' % (grammar[0], ' '.join(grammar[1]))
+                handler.reduce(action["grammar"])
+                # print 'reduce, 利用规则 %s -> %s' % (grammar[0], ' '.join(grammar[1]))
                 for _ in range(len(grammar[1])):
                     stat_stack.pop()
                     symbol_stack.pop()
