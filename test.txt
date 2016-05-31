@@ -1,7 +1,0 @@
-# comment
-'''
-comment heihei
-fuck yuo
-'''
-fuck ::= haha
-heihei ::= ri

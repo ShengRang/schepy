@@ -9,8 +9,13 @@
 <lsb> ::= <[>
 <rsb> ::= <]>
 
+<integer> ::= <-> <no_sign_integer>
+<integer> ::= <+> <no_sign_integer>
 <integer> ::= <0> <integer_tail> | <1> <integer_tail> | <2> <integer_tail> | <3> <integer_tail> | <4> <integer_tail>
 <integer> ::= <5> <integer_tail> | <6> <integer_tail> | <7> <integer_tail> | <8> <integer_tail> | <9> <integer_tail>
+<no_sign_integer> ::= <0> <integer_tail> | <1> <integer_tail> | <2> <integer_tail> | <3> <integer_tail> | <4> <integer_tail>
+<no_sign_integer> ::= <5> <integer_tail> | <6> <integer_tail> | <7> <integer_tail> | <8> <integer_tail> | <9> <integer_tail>
+
 <integer_tail> ::= <ep>
 <integer_tail> ::= <0> | <1> | <2> | <3> | <4> | <5> | <6> | <7> | <8> | <9>
 

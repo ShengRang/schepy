@@ -180,7 +180,8 @@ if __name__ == '__main__':
     #     print l.lex(raw_input(), ignore=["limit"])
 
     l = Lex()
-    l.read_lex("regular_lex.txt")
+    l.read_lex("test.txt")
     l.compile(grammar_type="regular")
+    l.lex_dfa.draw()
     while True:
         print l.lex(raw_input(), ignore=["limit"])

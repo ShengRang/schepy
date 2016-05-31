@@ -220,8 +220,8 @@ class SExp(object):
         elif self.stype == 's-exp':
             func = self.child[1].calc_value(env)
             args = self.child[2].calc_value(env)
-            print func
-            print args
+            # print func
+            # print args
             res = func(*[args_restore(arg) for arg in args])
         elif self.stype == 'define-exp':
             # <define-exp> ::= <(> <define> <symbol> <lexp> <)>

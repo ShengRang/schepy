@@ -27,7 +27,6 @@ parser.compile()
 print(colorful('语法编译完成...', 'Yellow'))
 
 global_env = Env.std_env()
-global_env['add'] = 'add~'
 
 while True:
     handler = ParseHandler()
