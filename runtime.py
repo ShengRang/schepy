@@ -27,7 +27,9 @@ class BuildIn(object):
 
     @staticmethod
     def sub(*args):
-        return reduce(op.sub, args, 0)
+        if len(args) == 1:
+            return -args[0]
+        return reduce(op.sub, args[1:], args[0])
 
 
 class Env(object):
@@ -245,12 +247,14 @@ class SExp(object):
             if self.child[0].stype == 'symbol':
                 res = (self.child[0].child[0].raw_value, )
             else:
-                res = self.child[0].calc_value(env) + (self.child[1].raw_value, )
+                res = self.child[0].calc_value(env) + (self.child[1].child[0].raw_value, )
         elif self.stype == 'proc-body':
             if len(self.child) <= 1:
                 res = self.child[0].calc_value(env)
             else:
-                pass
+                # 用语句块的最后一个语句作为语句块的值
+                _ = self.child[0].calc_value(env)
+                res = self.child[1].calc_value(env)
         elif self.stype == 'lambda-exp':
             # <lambda-exp> ::= <(> <lambda> <(> <args> <)> <proc-body> <)>
             args = self.child[3].calc_value(env)
