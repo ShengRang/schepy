@@ -34,7 +34,7 @@
 
 <symbol> ::= <identifier>
 
-<lexp-seq> ::= <lexp-seq> <lexp>
+<lexp-seq> ::= <lexp> <lexp-seq>
 <lexp-seq> ::= <lexp>
 
 <define-exp> ::= <(> <define> <symbol> <lexp> <)>
