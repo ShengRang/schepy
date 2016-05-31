@@ -204,18 +204,6 @@ class SExp(object):
             if self.child[0].stype == 'list':
                 res = [res, ]
         elif self.stype == 'lexp-seq':
-            # ..蜜汁处理. 很重要
-            # 对于 lexp-seq -> lexp, 不转list
-            # 对于lexp-seq -> lexp-seq lexp, 第二个转list. 如果第一个是lexp-seq -> lexp-seq lexp型, 不转list, 否则转
-            """
-            if len(self.child) > 1:
-                first = (self.child[0].calc_value(env), )
-                if len(self.child[0].child) > 1:
-                    first = first[0]
-                res = first + (self.child[1].calc_value(env), )
-            else:
-                res = self.child[0].calc_value(env)
-            """
             if len(self.child) > 1:
                 first = self.child[0].calc_value(env)
                 print 'fitsr: ', first
@@ -262,6 +250,17 @@ class SExp(object):
             print 'args: ', args
             print 'body:', body
             return Procedure(args, body, env)
+        elif self.stype == 'var-exps':
+            if len(self.child) == 4:
+                define(env, self.child[1].child[0].raw_value, self.child[2])
+            else:
+                self.child[0].calc_value(env)
+                define(env, self.child[2].child[0].raw_value, self.child[3])
+        elif self.stype == 'let-exp':
+            # <let-exp> ::= <(> <let> <(> <var-exps> <)> <proc-body> <)
+            let_env = Env.std_env(outer=env)
+            self.child[3].calc_value(let_env)
+            res = self.child[5].calc_value(let_env)
         if not self.static:
             self.value = res
         return res
