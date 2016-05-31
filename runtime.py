@@ -205,6 +205,7 @@ class SExp(object):
             res = self.child[0].calc_value(env)
             if self.child[0].stype == 'list':
                 res = [res, ]
+                res = args_restore(res)
         elif self.stype == 'lexp-seq':
             if len(self.child) > 1:
                 res = (self.child[0].calc_value(env), ) + self.child[1].calc_value(env)
@@ -212,12 +213,15 @@ class SExp(object):
                 res = (self.child[0].calc_value(env), )
             # print 'this lexp-seq:', res
         elif self.stype == 'list':
-            res = self.child[1].calc_value(env)
+            if len(self.child) == 3:
+                res = self.child[1].calc_value(env)
+            else:
+                res = tuple()
         elif self.stype == 's-exp':
             func = self.child[1].calc_value(env)
             args = self.child[2].calc_value(env)
-            # print func
-            # print args
+            print func
+            print args
             res = func(*[args_restore(arg) for arg in args])
         elif self.stype == 'define-exp':
             # <define-exp> ::= <(> <define> <symbol> <lexp> <)>
@@ -307,7 +311,23 @@ class SExp(object):
                     res = val
         elif self.stype == 'and-exp':
             # <and-exp> ::= <(> <and> <lexp-seq> <)>
-            pass
+            cnode = self.child[2]
+            res = True
+            while len(cnode.child) > 1:
+                val = cnode.child[0].calc_value(env)
+                if type(val) == list:
+                    val = args_restore(val)
+                if not val:
+                    res = val
+                    break
+                else:
+                    cnode = cnode.child[1]
+            else:
+                val = cnode.calc_value(env)[0]
+                if type(val) == list:
+                    val = args_restore(val)
+                if not val:
+                    res = val
         if not self.static:
             self.value = res
         return res

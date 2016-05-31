@@ -26,6 +26,7 @@
 <number> ::= <decimal> # 有理数
 
 <list> ::= <[> <lexp-seq> <]>
+<list> ::= <[> <]>  #空表
 
 <s-exp> ::= <(> <func> <lexp-seq> <)>
 <func> ::= <op>
