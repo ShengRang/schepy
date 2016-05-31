@@ -60,8 +60,8 @@ class Env(object):
         return self._dict.update(*args, **kwargs)
 
     @staticmethod
-    def std_env():
-        env = Env()
+    def std_env(outer=None):
+        env = Env(outer=outer)
         # env.update(vars(math))
         env.update({
             '+': BuildIn.add, '-': BuildIn.sub, '*': BuildIn.mul, '/': op.div,
@@ -99,7 +99,7 @@ class ParseHandler(object):
         self.exps = []
 
     def shift(self, token):
-        print(colorful('移近 {0} {1}'.format(token[0], token[1]), "Cyan"))
+        # print(colorful('移近 {0} {1}'.format(token[0], token[1]), "Cyan"))
         self.exps.append(SExp(stype=token[0], value=token[1]))
 
     def reduce(self, grammar):
@@ -122,7 +122,21 @@ def dynamic_exp(sexp, env):
 def define(env, symbol, sexp):
     env[symbol] = partial(dynamic_exp, sexp, env)
     env.dynamic_bind[symbol] = True
-    return env[symbol]
+    return 'define [%s] in env' % symbol
+
+
+class Procedure(object):
+
+    def __init__(self, params, body, outer_env):
+        self.params = params
+        self.body = body
+        self.outer_env = outer_env
+
+    def __call__(self, *args):
+        func_env = Env.std_env(outer=self.outer_env)
+        for param, arg in zip(self.params, args):
+            define(func_env, param, arg)
+        return self.body.calc_value(func_env)
 
 
 class SExp(object):
@@ -139,6 +153,10 @@ class SExp(object):
         self.child = []
         self.parent = parent
         # self.static = (stype != "identifier")   #非静态表达式
+
+    @property
+    def raw_value(self):
+        return self._value
 
     @property
     def static(self):
@@ -159,18 +177,22 @@ class SExp(object):
         :return:表达式的值
         """
         if self.static and self.value:
+            print(colorful('静态表达式, 直接返回值', 'Bold'))
             return self.value
         res = None
         if self.stype == 'number':
-            res = self.child[0].calc_value()
+            res = self.child[0].calc_value(env)
         elif self.stype == 'integer':
             res = int(self._value)
         elif self.stype == 'string':
             res = self._value
         elif self.stype == 'symbol':
-            res = self.child[0].calc_value()
+            self._value = self.child[0].raw_value
+            res = self.child[0].calc_value(env)
         elif self.stype == 'identifier':
+            # print 'i will find [%s]' % self._value
             res = env.find(self._value)
+            # print 'res is ', res
         elif self.stype == 'op':
             res = env.find(self._value)
         elif self.stype == 'atom' or self.stype == 'func':
@@ -183,6 +205,7 @@ class SExp(object):
             # ..蜜汁处理. 很重要
             # 对于 lexp-seq -> lexp, 不转list
             # 对于lexp-seq -> lexp-seq lexp, 第二个转list. 如果第一个是lexp-seq -> lexp-seq lexp型, 不转list, 否则转
+            """
             if len(self.child) > 1:
                 first = (self.child[0].calc_value(env), )
                 if len(self.child[0].child) > 1:
@@ -190,6 +213,13 @@ class SExp(object):
                 res = first + (self.child[1].calc_value(env), )
             else:
                 res = self.child[0].calc_value(env)
+            """
+            if len(self.child) > 1:
+                first = self.child[0].calc_value(env)
+                print 'fitsr: ', first
+                res = first + (self.child[1].calc_value(env), )
+            else:
+                res = (self.child[0].calc_value(env), )
             # print 'this lexp-seq:', res
         elif self.stype == 'list':
             res = self.child[1].calc_value(env)
@@ -198,12 +228,31 @@ class SExp(object):
             args = self.child[2].calc_value(env)
             print func
             print args
+            '''
             if type(args) == list:
                 res = func(args_restore(args))
             else:
                 res = func(*args)
-        elif self.stype == 'lambda':
-            pass
+            '''
+            res = func(*[args_restore(arg) for arg in args])
+        elif self.stype == 'define-exp':
+            # <define-exp> ::= <(> <define> <symbol> <lexp> <)>
+            symbol = self.child[2].child[0].raw_value
+            # env[symbol] = partial(dynamic_exp, self.child[3], env)
+            # env.dynamic_bind[symbol] = True
+            print define(env, symbol, self.child[3])
+        elif self.stype == 'args':
+            if self.child[0].stype == 'symbol':
+                res = self.child[0].raw_value
+            else:
+                res = self.child[0].calc_value(env) + [self.child[1].raw_value, ]
+        elif self.stype == 'lambda-exp':
+            # <lambda-exp> ::= <(> <lambda> <(> <args> <)> <proc-body> <)>
+            args = self.child[3]
+            body = self.child[5]
+            print 'args: ', args
+            print 'body:', body
+            return Procedure(args, body, env)
         if not self.static:
             self.value = res
         return res

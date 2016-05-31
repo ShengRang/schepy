@@ -279,7 +279,7 @@ class LRParser(object):
         stat_stack = [0, ]
         symbol_stack = ['$', ]
         input_stack = [('$', '$')] + tokens[::-1]
-        print input_stack
+        # print input_stack
         while not (stat_stack == [0] and [x[0] for x in input_stack] == ['$', 'start'] and symbol_stack == ['$']):
             top_stat = stat_stack[-1]
             top_token_type = input_stack[-1][0]      # 取 token_type
