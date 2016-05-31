@@ -135,7 +135,7 @@ class Procedure(object):
     def __call__(self, *args):
         func_env = Env.std_env(outer=self.outer_env)
         for param, arg in zip(self.params, args):
-            define(func_env, param, arg)
+            func_env[param] = arg
         return self.body.calc_value(func_env)
 
 
@@ -243,12 +243,17 @@ class SExp(object):
             print define(env, symbol, self.child[3])
         elif self.stype == 'args':
             if self.child[0].stype == 'symbol':
-                res = self.child[0].raw_value
+                res = (self.child[0].child[0].raw_value, )
             else:
-                res = self.child[0].calc_value(env) + [self.child[1].raw_value, ]
+                res = self.child[0].calc_value(env) + (self.child[1].raw_value, )
+        elif self.stype == 'proc-body':
+            if len(self.child) <= 1:
+                res = self.child[0].calc_value(env)
+            else:
+                pass
         elif self.stype == 'lambda-exp':
             # <lambda-exp> ::= <(> <lambda> <(> <args> <)> <proc-body> <)>
-            args = self.child[3]
+            args = self.child[3].calc_value(env)
             body = self.child[5]
             print 'args: ', args
             print 'body:', body
