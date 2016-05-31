@@ -3,29 +3,65 @@
 # 约定 ep 表示 ε
 # 终结符通过出度为0, 入度不为0来判断
 
+
 <start> ::= <lexp>
 <lexp> ::= <atom>
 <lexp> ::= <list>
-<lexp> ::= <s-exp>
+<lexp> ::= <s-exp>      # normal form s expression
+
+# special form s expression
+<lexp> ::= <define-exp>
+<lexp> ::= <proc-define-exp>
+<lexp> ::= <if-exp>
+<lexp> ::= <or-exp>
+<lexp> ::= <and-exp>
 <lexp> ::= <lambda-exp>
+<lexp> ::= <let-exp>
 
-# 原子可以是数字, symbol, 字符串
+<atom> ::= <symbol>
+<atom> ::= <bool>
 <atom> ::= <number>
-<atom> ::= <identifier>
-<atom> ::= <string>
 
-# <symbol> ::= <func>   # 感觉即使是函数也应该绑定一个symbol(例如lambda表达式没绑定也不算symbol)才算是symbol
-#<symbol> ::= <identifier>
+<number> ::= <integer> # 整数
+<number> ::= <decimal> # 有理数
 
 <list> ::= <[> <lexp-seq> <]>
 
-<s-exp> ::= <lpl> <func> <lexp-seq> <rpl>
-<func> ::= <identifier>
+<s-exp> ::= <(> <func> <lexp-seq> <)>
 <func> ::= <op>
+<func> ::= <symbol>
 <func> ::= <lambda-exp>
+
+<symbol> ::= <identifier>
+
 <lexp-seq> ::= <lexp-seq> <lexp>
 <lexp-seq> ::= <lexp>
 
-<lambda-exp> ::= <lpl> <lambda> <lpl> <args> <rpl> <lexp> <rpl>
-<args> ::= <identifier>
-<args> ::= <identifier> <args>
+<define-exp> ::= <(> <define> <symbol> <lexp> <)>
+
+<proc-define-exp> ::= <(> <define> <(> <symbol> <args> <)> <proc-body> <)>
+<proc-define-exp> ::= <(> <define> <(> <symbol> <)> <proc-body> <)>
+
+<proc-body> ::= <define-exp> <proc-body>
+<proc-body> ::= <proc-define-exp> <proc-body>
+<proc-body> ::= <let-exp> <proc-body>
+
+<proc-body> ::= <lexp>
+
+<args> ::= <args> <symbol>
+<args> ::= <symbol>
+
+<if-exp> ::= <(> <if> <predicate> <consequent> <alternate> <)>
+<predicate> ::= <lexp>
+<consequent> ::= <lexp>
+<alternate> ::= <lexp>
+
+<or-exp> ::= <(> <or> <lexp-seq> <)>
+
+<and-exp> ::= <(> <and> <lexp-seq> <)>
+
+<lambda-exp> ::= <(> <lambda> <(> <args> <)> <proc-body> <)>
+
+<let-exp> ::= <(> <let> <(> <var-exps> <)> <proc-body> <)>
+<var-exps> ::= <var-exps> <(> <symbol> <lexp> <)>
+<var-exps> ::= <(> <symbol> <lexp> <)>

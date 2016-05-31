@@ -6,6 +6,13 @@ from Queue import Queue
 from fa import DFA, DFANode
 from util import bnf_reader, frozen_items
 from lex import Lex
+from util import colorful
+
+
+class LRConflict(Exception):
+
+    def __init__(self):
+        pass
 
 
 class LRParser(object):
@@ -239,10 +246,24 @@ class LRParser(object):
             for item in tmp.lr_items:
                 if item[2]:
                     # 移进状态
+                    if item[2][0] in lr_table[tmp.id]:
+                        if lr_table[tmp.id][item[2][0]]['action'] != 'shift':
+                            print(colorful('移近规约冲突', 'Red'))
+                            raise LRConflict()
+                        elif lr_table[tmp.id][item[2][0]]['next'] != tmp.next[item[2][0]].id:
+                            print(colorful('移近移近冲突', 'Red'))
+                            raise LRConflict()
                     lr_table[tmp.id][item[2][0]] = dict(action="shift", next=tmp.next[item[2][0]].id)
                 else:
                     # 规约状态
                     for a in item[3]:
+                        if a in lr_table[tmp.id]:
+                            if lr_table[tmp.id][a]['action'] != 'reduce':
+                                print(colorful('移近规约冲突', 'Red'))
+                                raise LRConflict()
+                            elif lr_table[tmp.id][a]['grammar'] != item:
+                                print(colorful('规约规约冲突', 'Red'))
+                                raise LRConflict()
                         lr_table[tmp.id][a] = dict(action="reduce", grammar=item)
             for next_node in tmp.next.values():
                 que.put(next_node)
@@ -299,32 +320,40 @@ class LRParser(object):
 
 
 if __name__ == "__main__":
-    lexer = Lex()
-    lexer.read_lex("regex_lex.txt")
-    lexer.compile()
-    print '词法分析编译完成'
-    par = LRParser()
-    par.read_grammar("grammar.txt")
-    par.calc_first()
-    # par.first(["R", "$"])
-    par.compile()
-    par.show_dfa()
-    print '语法分析编译完成'
+
+    import readline
+    if 'libedit' in readline.__doc__:
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
+
+    class ParseHandler(object):
+
+        def __init__(self):
+            self.ast = None
+            self.exps = []
+
+        def shift(self, token):
+            print(colorful('移近 {0} {1}'.format(token[0], token[1]), "Cyan"))
+
+        def reduce(self, grammar):
+            """
+            规约动作, grammar为规约用的产身世
+            """
+            print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
+
+    from util import colorful
+    lex = Lex()
+    lex.keyword = ['lambda', '[', ']', 'let', 'define', 'if', 'cond', 'or', 'and', '(', ')']
+    lex.read_lex('regular_lex.txt')
+    lex.compile(grammar_type="regular")
+    print(colorful('词法编译完成...', 'Yellow'))
+
+    parser = LRParser()
+    parser.read_grammar('schepy_grammar.txt')
+    parser.compile()
+    print(colorful('语法编译完成...', 'Yellow'))
+    parser.show_dfa()
+
     while True:
-        par.parse(lexer.lex(raw_input(), ignore=["limit"]))
-    """
-    print l.first("S")
-    print l.first(['A', 'B'])
-    print l.first(['b', 'C'])
-    print l.first(['a', 'D'])
-    print l.first(["A", "D"])
-    print l.first(['a', 'S'])
-    """
-    # print l.closure(("start", tuple(), ("A", ), {'$'}))
-    #print l.closure(("S", ("A", "d"), ("D", ), {'$'}))  #造成无限循环
-    # print l.first(['ep', '$'])
-    # print l.first(['A', 'b'])
-    #print l.closure(("start", tuple(), ("S", ), ['$']))
-    # l.compile()
-    # l.show_dfa()
-    # l.lr_dfa.draw(filename="LR", show_meta=["lr_items", "id"])
+        parser.parse(lex.lex(raw_input(), ignore=["limit"]), ParseHandler())

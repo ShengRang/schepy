@@ -40,6 +40,7 @@ def bnf_reader(filename='test.txt'):
     with open(filename) as reader:
         comment = False
         for line in reader:
+            line = line[:line.find('#')]    # 删除注释
             line = parse_convert(line).strip()
             if line == '"""' or line == "'''":
                 comment = not comment

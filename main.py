@@ -16,7 +16,7 @@ from util import print_with_color, colorful
 from runtime import ParseHandler, Env
 
 lex = Lex()
-lex.keyword = ['lambda', '[', ']']
+lex.keyword = ['lambda', '[', ']', 'let', 'define', 'if', 'cond', 'or', 'and', '(', ')']
 lex.read_lex('regular_lex.txt')
 lex.compile(grammar_type="regular")
 print(colorful('词法编译完成...', 'Yellow'))
@@ -26,6 +26,10 @@ parser.read_grammar('schepy_grammar.txt')
 parser.compile()
 print(colorful('语法编译完成...', 'Yellow'))
 
+import json
+with open('foo.json', 'wt') as f:
+    f.write(repr(parser.lr_table))
+
 global_env = Env.std_env()
 global_env['add'] = 'add~'
 
@@ -33,4 +37,4 @@ while True:
     exp = raw_input(colorful('schepy>', 'Cyan'))
     handler = ParseHandler()
     parser.parse(lex.lex(exp, ignore=["limit"]), handler)
-    print_with_color('表达式的值: ' + repr(handler.ast.calc_value(env=global_env)), "Magenta")
+    # print_with_color('表达式的值: ' + repr(handler.ast.calc_value(env=global_env)), "Magenta")
