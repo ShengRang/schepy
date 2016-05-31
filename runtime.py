@@ -108,7 +108,7 @@ class ParseHandler(object):
         """
         规约动作, grammar为规约用的产身世
         """
-        # print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
+        print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
         if grammar[0] == 'start':
             self.ast = self.exps[0]
             return
@@ -188,6 +188,8 @@ class SExp(object):
             res = int(self._value)
         elif self.stype == 'string':
             res = self._value
+        elif self.stype == 'bool':
+            res = True if self._value == '$T' else False
         elif self.stype == 'symbol':
             self._value = self.child[0].raw_value
             res = self.child[0].calc_value(env)
@@ -272,6 +274,19 @@ class SExp(object):
                 proc = Procedure(args, body, env)
                 env[symbol] = proc
             res = symbol
+        elif self.stype == 'predicate':
+            if self.child[0].calc_value(env):
+                res = True
+            else:
+                res = False
+        elif self.stype in ['consequent', 'alternate']:
+            res = self.child[0].calc_value(env)
+        elif self.stype == 'if-exp':
+            # <if-exp> ::= <(> <if> <predicate> <consequent> <alternate> <)>
+            if self.child[2].calc_value(env):
+                res = self.child[3].calc_value(env)
+            else:
+                res = self.child[4].calc_value(env)
         if not self.static:
             self.value = res
         return res

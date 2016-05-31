@@ -144,7 +144,10 @@ class Lex(object):
         def lex_handler(token_type, token):
             if token_type[0] not in ignore:
                 if token in self.keyword:
-                    tokens.append((token, token))
+                    if token == '$T' or token == '$F':
+                        tokens.append(('bool', token))
+                    else:
+                        tokens.append((token, token))
                 else:
                     tokens.append((token_type[0], token))
 

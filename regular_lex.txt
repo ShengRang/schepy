@@ -17,6 +17,7 @@
 <integer_tail> ::= <0> <integer_tail> | <1> <integer_tail> | <2> <integer_tail> | <3> <integer_tail> | <4> <integer_tail>
 <integer_tail> ::= <5> <integer_tail> | <6> <integer_tail> | <7> <integer_tail> | <8> <integer_tail> | <9> <integer_tail>
 
+<identifier> ::= <$> <id_tail>
 <identifier> ::= <a> <id_tail> | <b> <id_tail> | <c> <id_tail> | <d> <id_tail> | <e> <id_tail> | <f> <id_tail>
 <identifier> ::= <A> <id_tail> | <B> <id_tail> | <C> <id_tail> | <D> <id_tail> | <E> <id_tail> | <F> <id_tail>
 <identifier> ::= <g> <id_tail> | <h> <id_tail> | <i> <id_tail> | <j> <id_tail> | <k> <id_tail> | <l> <id_tail> | <m> <id_tail>
@@ -40,6 +41,7 @@
 <id_tail> ::= <_> <id_tail>
 <id_tail> ::= <!> <id_tail>
 <id_tail> ::= <?> <id_tail>
+<id_tail> ::= <$> <id_tail>
 
 <string> ::= <"> <string_element>
 <string_element> ::= <">
