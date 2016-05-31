@@ -9,6 +9,10 @@ import operator as op
 from functools import partial
 
 from util import colorful
+from util import args_restore
+import crash_on_ipy
+
+crash_on_ipy.init()
 
 
 class BuildIn(object):
@@ -158,11 +162,14 @@ class SExp(object):
             return self.value
         res = None
         if self.stype == 'number':
+            res = self.child[0].calc_value()
+        elif self.stype == 'integer':
             res = int(self._value)
         elif self.stype == 'string':
             res = self._value
+        elif self.stype == 'symbol':
+            res = self.child[0].calc_value()
         elif self.stype == 'identifier':
-            # define(env, self._value, self)
             res = env.find(self._value)
         elif self.stype == 'op':
             res = env.find(self._value)
@@ -183,23 +190,18 @@ class SExp(object):
                 res = first + (self.child[1].calc_value(env), )
             else:
                 res = self.child[0].calc_value(env)
-                # if self.child[0].stype == 'lexp' and self.child[0].child[0].stype == 'list':
-                #     res = res[0]
             # print 'this lexp-seq:', res
         elif self.stype == 'list':
-            # 一致性处理, lexp-seq 已经做了list处理
             res = self.child[1].calc_value(env)
         elif self.stype == 's-exp':
             func = self.child[1].calc_value(env)
             args = self.child[2].calc_value(env)
-            lexp_seq = self.child[2]
             print func
             print args
-            # if lexp_seq.child[0].stype == 'lexp' and lexp_seq.child[0].child[0].stype == 'list':
-            #     res = func(args)
-            # else:
-            #     res = func(*args)
-            res = func(args)
+            if type(args) == list:
+                res = func(args_restore(args))
+            else:
+                res = func(*args)
         elif self.stype == 'lambda':
             pass
         if not self.static:

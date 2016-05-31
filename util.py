@@ -121,3 +121,18 @@ def colorful(msg, fore_color="Red", back_color="Default"):
         'Reset': '\033[0;0m',
     }
     return ref.get(back_color+'bg', '\033[0m') + ref.get(fore_color, '\033[0m') + msg + ref['Reset']
+
+
+def args_restore(args):
+    """
+    :param args: 消除lexp-seq规约时产生的伪列表
+    :return:
+    """
+    if type(args) == list and len(args) == 1 and type(args[0]) == tuple:
+        in_args = args[0]
+        res = []
+        for a in in_args:
+            res.append(args_restore(a))
+        return res
+    else:
+        return args
