@@ -16,7 +16,7 @@ from util import print_with_color, colorful
 from runtime import ParseHandler, Env
 
 lex = Lex()
-lex.keyword = ['lambda', '[', ']', 'let', 'define', 'if', 'cond', 'or', 'and', '(', ')']
+lex.keyword = ['lambda', '[', ']', 'let', 'define', 'if', 'cond', 'or', 'and', '(', ')', '#T', '#F']
 lex.read_lex('regular_lex.txt')
 lex.compile(grammar_type="regular")
 print(colorful('词法编译完成...', 'Yellow'))

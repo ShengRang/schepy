@@ -64,7 +64,7 @@ class Env(object):
     @staticmethod
     def std_env(outer=None):
         env = Env(outer=outer)
-        # env.update(vars(math))
+        env.update(vars(math))
         env.update({
             '+': BuildIn.add, '-': BuildIn.sub, '*': BuildIn.mul, '/': op.div,
             '>': op.gt, '<': op.lt, '>=': op.ge, '<=': op.le, '=': op.eq,
@@ -108,7 +108,7 @@ class ParseHandler(object):
         """
         规约动作, grammar为规约用的产身世
         """
-        print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
+        # print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
         if grammar[0] == 'start':
             self.ast = self.exps[0]
             return
@@ -206,7 +206,6 @@ class SExp(object):
         elif self.stype == 'lexp-seq':
             if len(self.child) > 1:
                 first = self.child[0].calc_value(env)
-                print 'fitsr: ', first
                 res = first + (self.child[1].calc_value(env), )
             else:
                 res = (self.child[0].calc_value(env), )
@@ -216,21 +215,16 @@ class SExp(object):
         elif self.stype == 's-exp':
             func = self.child[1].calc_value(env)
             args = self.child[2].calc_value(env)
-            print func
-            print args
-            '''
-            if type(args) == list:
-                res = func(args_restore(args))
-            else:
-                res = func(*args)
-            '''
+            # print func
+            # print args
             res = func(*[args_restore(arg) for arg in args])
         elif self.stype == 'define-exp':
             # <define-exp> ::= <(> <define> <symbol> <lexp> <)>
             symbol = self.child[2].child[0].raw_value
             # env[symbol] = partial(dynamic_exp, self.child[3], env)
             # env.dynamic_bind[symbol] = True
-            print define(env, symbol, self.child[3])
+            define(env, symbol, self.child[3])
+            res = symbol
         elif self.stype == 'args':
             if self.child[0].stype == 'symbol':
                 res = (self.child[0].child[0].raw_value, )
@@ -247,9 +241,9 @@ class SExp(object):
             # <lambda-exp> ::= <(> <lambda> <(> <args> <)> <proc-body> <)>
             args = self.child[3].calc_value(env)
             body = self.child[5]
-            print 'args: ', args
-            print 'body:', body
-            return Procedure(args, body, env)
+            # print 'args: ', args
+            # print 'body:', body
+            res = Procedure(args, body, env)
         elif self.stype == 'var-exps':
             if len(self.child) == 4:
                 define(env, self.child[1].child[0].raw_value, self.child[2])
@@ -261,6 +255,23 @@ class SExp(object):
             let_env = Env.std_env(outer=env)
             self.child[3].calc_value(let_env)
             res = self.child[5].calc_value(let_env)
+        elif self.stype == 'proc-define-exp':
+            # <proc-define-exp> ::= <(> <define> <(> <symbol> <args> <)> <proc-body> <)>
+            # <proc-define-exp> ::= <(> <define> <(> <symbol> <)> <proc-body> <)>
+            if len(self.child) > 7:
+                # 有参函数
+                symbol = self.child[3].child[0].raw_value
+                args = self.child[4].calc_value(env)
+                body = self.child[6]
+                proc = Procedure(args, body, env)
+                env[symbol] = proc
+            else:
+                symbol = self.child[2].child[0].raw_value
+                args = tuple()
+                body = self.child[5]
+                proc = Procedure(args, body, env)
+                env[symbol] = proc
+            res = symbol
         if not self.static:
             self.value = res
         return res

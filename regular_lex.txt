@@ -36,6 +36,10 @@
 <id_tail> ::= <U> <id_tail> | <V> <id_tail> | <W> <id_tail> | <X> <id_tail> | <Y> <id_tail> | <Z> <id_tail>
 <id_tail> ::= <0> <id_tail> | <1> <id_tail> | <2> <id_tail> | <3> <id_tail> | <4> <id_tail>
 <id_tail> ::= <5> <id_tail> | <6> <id_tail> | <7> <id_tail> | <8> <id_tail> | <9> <id_tail>
+<id_tail> ::= <-> <id_tail>
+<id_tail> ::= <_> <id_tail>
+<id_tail> ::= <!> <id_tail>
+<id_tail> ::= <?> <id_tail>
 
 <string> ::= <"> <string_element>
 <string_element> ::= <">
