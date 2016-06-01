@@ -29,6 +29,7 @@
 <list> ::= <[> <]>  #空表
 
 <s-exp> ::= <(> <func> <lexp-seq> <)>
+<s-exp> ::= <(> <func> <)>
 <func> ::= <op>
 <func> ::= <symbol>
 <func> ::= <lambda-exp>

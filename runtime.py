@@ -220,9 +220,12 @@ class SExp(object):
         elif self.stype == 's-exp':
             func = self.child[1].calc_value(env)
             args = self.child[2].calc_value(env)
+            if len(self.child) == 3:
+                res = func()
+            else:
+                res = func(*[args_restore(arg) for arg in args])
             # print func
             # print args
-            res = func(*[args_restore(arg) for arg in args])
         elif self.stype == 'define-exp':
             # <define-exp> ::= <(> <define> <symbol> <lexp> <)>
             symbol = self.child[2].child[0].raw_value
@@ -271,7 +274,7 @@ class SExp(object):
                 proc = Procedure(args, body, env)
                 env[symbol] = proc
             else:
-                symbol = self.child[2].child[0].raw_value
+                symbol = self.child[3].child[0].raw_value
                 args = tuple()
                 body = self.child[5]
                 proc = Procedure(args, body, env)
