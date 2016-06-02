@@ -279,6 +279,9 @@ class SExp(object):
                 body = self.child[5]
                 proc = Procedure(args, body, env)
                 env[symbol] = proc
+            if symbol in env.dynamic_bind:
+                # 如果之前是动态绑定key, 移除
+                del env.dynamic_bind[symbol]
             res = symbol
         elif self.stype == 'predicate':
             if self.child[0].calc_value(env):
