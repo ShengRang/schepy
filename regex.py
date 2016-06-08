@@ -114,7 +114,7 @@ class Regex(object):
     def compile_nfa(cls, pattern, extend=False, **kwargs):
         if extend:
             pattern = cls._extend(pattern)
-            print 'after extend:', pattern
+            # print 'after extend:', pattern
         res = compile_nfa(pattern)
         for node in res.end:
             node.meta.update(kwargs)
@@ -124,7 +124,7 @@ class Regex(object):
     def compile_dfa(cls, pattern, extend=False):
         if extend:
             pattern = cls._extend(pattern)
-        print 'after extend: ', pattern
+        # print 'after extend: ', pattern
         return compile_dfa(pattern)
 
 is_regex = Regex.is_regex

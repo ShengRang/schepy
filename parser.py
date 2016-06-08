@@ -274,7 +274,7 @@ class LRParser(object):
         """
         接受token流, 并进行规约
         """
-        print '分析 tokens 流: ', tokens
+        # print '分析 tokens 流: ', tokens
         lr_table = self.lr_table
         stat_stack = [0, ]
         symbol_stack = ['$', ]

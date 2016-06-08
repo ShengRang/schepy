@@ -3,6 +3,8 @@
 something useful but ..
 """
 
+import time
+
 
 def unions(sets):
     """
@@ -136,3 +138,24 @@ def args_restore(args):
         return res
     else:
         return args
+
+
+import sys
+
+
+def cli_spinner(msg=""):
+    # frames = ["◐", "◓", "◑", "◒", ]
+    frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    x = 0
+    print '\33[?25l\r',
+    while True:
+        # sys.stdout.write(frames[x])
+        print colorful(frames[x], "Magenta"), msg,
+        x = (x + 1) % len(frames)
+        time.sleep(0.1)
+        sys.stdout.write('\r')
+        sys.stdout.flush()
+
+# cli_spinner("foo")
+
+

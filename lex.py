@@ -69,7 +69,7 @@ class Lex(object):
         if grammar_type == 'regex':
             nfas = []
             for le in self.lexs:
-                print le
+                # print le
                 nfas.append(Regex.compile_nfa(le[1], extend=True, type=le[0]))
             nfa = NFA.combine(*nfas)
             self.lex_dfa = nfa.convert_dfa(copy_meta=["type"])
@@ -99,7 +99,7 @@ class Lex(object):
                     not_ter.append(sym)
                 if g_out[sym] == 0:
                     ter.append(sym)
-            print ter, not_ter
+            # print ter, not_ter
             nfas = []
             for token_type in not_ter:
                 nfa = NFA()
@@ -180,8 +180,9 @@ if __name__ == '__main__':
     #     print l.lex(raw_input(), ignore=["limit"])
 
     l = Lex()
-    l.read_lex("test.txt")
-    l.compile(grammar_type="regular")
-    l.lex_dfa.draw()
+    l.read_lex("regex_lex.txt")
+    l.compile()
+    # l.compile(grammar_type="regular")
+    # l.lex_dfa.draw()
     while True:
         print l.lex(raw_input(), ignore=["limit"])

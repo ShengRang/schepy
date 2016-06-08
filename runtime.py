@@ -108,7 +108,7 @@ class ParseHandler(object):
         """
         规约动作, grammar为规约用的产身世
         """
-        print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
+        # print('reduce with ' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
         if grammar[0] == 'start':
             self.ast = self.exps[0]
             return
@@ -186,6 +186,8 @@ class SExp(object):
             res = self.child[0].calc_value(env)
         elif self.stype == 'integer':
             res = int(self._value)
+        elif self.stype == 'decimal':
+            res = float(self._value)
         elif self.stype == 'string':
             res = self._value
         elif self.stype == 'bool':
