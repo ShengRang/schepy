@@ -31,6 +31,15 @@ class BuildIn(object):
             return -args[0]
         return reduce(op.sub, args[1:], args[0])
 
+    @staticmethod
+    def append(*args):
+        return reduce(op.add, args, [])
+
+    @staticmethod
+    def filter(fn, s):
+        # 用scheme写也行.. 就是没有实现尾递归效率有点捉急..
+        return filter(fn, s)
+
 
 class Env(object):
 
@@ -70,7 +79,8 @@ class Env(object):
             '>': op.gt, '<': op.lt, '>=': op.ge, '<=': op.le, '=': op.eq,
             'define': partial(define, env),
             'abs':     abs,
-            'append':  op.add,
+            'append':  BuildIn.append,
+            'filter': BuildIn.filter,
             'apply':   apply,
             'begin':   lambda *x: x[-1],
             'car':     lambda x: x[0],
