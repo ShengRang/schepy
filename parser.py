@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from __future__ import print_function
 from collections import defaultdict
 from Queue import Queue
 
@@ -73,7 +74,8 @@ class LRParser(object):
                 eps[symbol] = True
                 grammar[symbol] = []
                 continue
-            grammar[symbol] = filter(lambda exp: not sum(vt[e] for e in exp), exps) # 删除所有含有终结符的产生式
+            grammar[symbol] = filter(
+                lambda exp: not sum(vt[e] for e in exp), exps) # 删除所有含有终结符的产生式
             if not len(grammar[symbol]):
                 eps[symbol] = False
         while sum(len(exps) for exps in grammar.itervalues()):
@@ -82,13 +84,14 @@ class LRParser(object):
                 if not exps:
                     continue
                 for i in range(len(exps)):
-                    exps[i] = filter(lambda e: not(not vt[e] and eps.get(e, False)), exps[i])
+                    exps[i] = filter(
+                        lambda e: not(not vt[e] and eps.get(e, False)), exps[i])
                 if filter(lambda exp: not exp, exps):
                     grammar[symbol] = []
                     eps[symbol] = True
                     continue
-                # grammar[symbol] = filter(lambda exp: not sum(not eps.get(e, True) for e in exp), exps)
-                grammar[symbol] = filter(lambda exp: sum(eps.get(e, True) for e in exp) == len(exp), exps)
+                grammar[symbol] = filter(
+                    lambda exp: sum(eps.get(e, True) for e in exp) == len(exp), exps)
                 # 如果右部存在为非空的非终结符, 则删除该产生式
                 if not len(grammar[symbol]):
                     eps[symbol] = False
@@ -147,9 +150,12 @@ class LRParser(object):
                 res.update(self.first(symbols[i]))
                 if symbols[i] in self.terminators and symbols[i] != "ep":
                     break
-                if sum(1 for s in symbols[:i+1] if "ep" in self._first[s]) != i+1:
+                if sum(1 for s in symbols[:i+1]
+                       if "ep" in self._first[s]) != i+1:
                     break
-            if "ep" in res and sum(1 for s in symbols if "ep" in self._first[s]) != len(symbols):
+            if "ep" in res \
+                    and sum(1 for s in symbols
+                            if "ep" in self._first[s]) != len(symbols):
                 res.remove("ep")
             return res
 
@@ -182,7 +188,8 @@ class LRParser(object):
                     _exp = tuple()
                 for a in top[3]:
                     fst = self.first(list(gama) + [a])
-                    if not fst.issubset(vis[(B, tuple(), _exp)]):   # 如果曾经出现过, 不再入队
+                    if not fst.issubset(vis[(B, tuple(), _exp)]):
+                     # 如果曾经出现过, 不再入队
                         vis[(B, tuple(), _exp)].update(fst)
                         que.put((B, tuple(), _exp, fst))
         return [core + (head, ) for core, head in vis.iteritems()]
@@ -197,7 +204,10 @@ class LRParser(object):
         grammar = self.grammar
         dfa = DFA()
         que = Queue()
-        dfa.start = DFANode(id=alloc, lr_items=self.closure(("start", tuple(), tuple(grammar["start"][0]), {'$'})))
+        dfa.start = DFANode(id=alloc,
+                            lr_items=self.closure(("start", tuple(),
+                                                   tuple(grammar["start"][0]),
+                                                   {'$'})))
         self.idx_items = [dfa.start]
         que.put(dfa.start.lr_items)
         vis = dict()
@@ -212,7 +222,8 @@ class LRParser(object):
             tmp = defaultdict(list)
             for item in lr_items:
                 if item[2]:
-                    u_item = (item[0], item[1] + item[2][:1], item[2][1:], item[3])
+                    u_item = (item[0], item[1] + item[2][:1],
+                              item[2][1:], item[3])
                     tmp[item[2][0]].append(u_item)
                     # 可能该状态有两个以上项目可以通过 item[2][0] 转换到新项目, 而新的项目集应该是他们的合集
             for l_hand, items in tmp.iteritems():
@@ -221,11 +232,13 @@ class LRParser(object):
                     u_items = self.closure(item)
                     for u_item in u_items:
                         vitem[u_item[:-1]].update(u_item[3])
-                next_items = [core + (head, ) for core, head in vitem.iteritems()]
+                next_items = [core + (head, )
+                              for core, head in vitem.iteritems()]
                 if frozen_items(next_items) not in vis:
                     que.put(next_items)
                     alloc += 1
-                    dfa_node.next[l_hand] = DFANode(id=alloc, lr_items=next_items)
+                    dfa_node.next[l_hand] = DFANode(id=alloc,
+                                                    lr_items=next_items)
                     self.idx_items.append(dfa_node.next[l_hand])        # 插入新节点
                     vis[frozen_items(next_items)] = dfa_node.next[l_hand]
                 else:
@@ -250,10 +263,12 @@ class LRParser(object):
                         if lr_table[tmp.id][item[2][0]]['action'] != 'shift':
                             print(colorful('移近规约冲突', 'Red'))
                             raise LRConflict()
-                        elif lr_table[tmp.id][item[2][0]]['next'] != tmp.next[item[2][0]].id:
+                        elif lr_table[tmp.id][item[2][0]]['next'] != \
+                                tmp.next[item[2][0]].id:
                             print(colorful('移近移近冲突', 'Red'))
                             raise LRConflict()
-                    lr_table[tmp.id][item[2][0]] = dict(action="shift", next=tmp.next[item[2][0]].id)
+                    lr_table[tmp.id][item[2][0]] = \
+                        dict(action="shift", next=tmp.next[item[2][0]].id)
                 else:
                     # 规约状态
                     for a in item[3]:
@@ -264,7 +279,8 @@ class LRParser(object):
                             elif lr_table[tmp.id][a]['grammar'] != item:
                                 print(colorful('规约规约冲突', 'Red'))
                                 raise LRConflict()
-                        lr_table[tmp.id][a] = dict(action="reduce", grammar=item)
+                        lr_table[tmp.id][a] = dict(action="reduce",
+                                                   grammar=item)
             for next_node in tmp.next.values():
                 que.put(next_node)
         self.lr_table = lr_table
@@ -298,7 +314,7 @@ class LRParser(object):
                     stat_stack.pop()
                     symbol_stack.pop()
                 input_stack.append((grammar[0], 'no-sense'))
-        print '规约成功, 符合语法规则!'
+        print('规约成功, 符合语法规则!')
 
     def show_dfa(self):
         """
@@ -316,7 +332,7 @@ class LRParser(object):
             tmp.meta["items"] = '\n'.join(['%s -> %s ` %s, %s' % (item[0], ''.join(item[1]), ''.join(item[2]), '/'.join(item[3])) for item in lr_items])
             for a in tmp.next.keys():
                 que.put(tmp.next[a])
-        self.lr_dfa.draw("LR", show_meta=["items"])
+        # self.lr_dfa.draw("LR", show_meta=["items"])
 
 
 if __name__ == "__main__":
@@ -342,7 +358,7 @@ if __name__ == "__main__":
             """
             print('利用规则' + colorful('%s -> %s' % (grammar[0], ' '.join(grammar[1])), "Green"))
 
-    from util import colorful
+    # from util import colorful
     lex = Lex()
     lex.keyword = ['lambda', '[', ']', 'let', 'define', 'if', 'cond', 'or', 'and', '(', ')']
     lex.read_lex('regular_lex.txt')

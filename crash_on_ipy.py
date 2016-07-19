@@ -1,3 +1,7 @@
+# coding: utf-8
+"""
+出现异常进入iPython调试
+"""
 import sys
 
 
