@@ -1,5 +1,5 @@
 
-# ${1:Project Name}
+# schepy
 编译原理课设, 很简单的类似scheme解释器
 
 当然编译原理和scheme都是初入门， 理解很浅， 例如并不会写尾递归优化
