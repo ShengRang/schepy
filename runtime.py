@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-运行时环境
+解释执行
 """
 
 from __future__ import division
@@ -10,9 +10,9 @@ from functools import partial
 
 from util import colorful
 from util import args_restore
-import crash_on_ipy
+# import crash_on_ipy
 
-crash_on_ipy.init()
+# crash_on_ipy.init()
 
 
 class BuildIn(object):
@@ -192,125 +192,120 @@ class SExp(object):
             print(colorful('静态表达式, 直接返回值', 'Bold'))
             return self.value
         res = None
-        if self.stype == 'number':
-            res = self.child[0].calc_value(env)
-        elif self.stype == 'integer':
+        stype, child = self.stype, self.child
+        if stype == 'number':
+            res = child[0].calc_value(env)
+        elif stype == 'integer':
             res = int(self._value)
-        elif self.stype == 'decimal':
+        elif stype == 'decimal':
             res = float(self._value)
-        elif self.stype == 'string':
+        elif stype == 'string':
             res = self._value
-        elif self.stype == 'bool':
+        elif stype == 'bool':
             res = True if self._value == '$T' else False
-        elif self.stype == 'symbol':
-            self._value = self.child[0].raw_value
-            res = self.child[0].calc_value(env)
-        elif self.stype == 'identifier':
-            # print 'i will find [%s]' % self._value
+        elif stype == 'symbol':
+            self._value = child[0].raw_value
+            res = child[0].calc_value(env)
+        elif stype == 'identifier':
             res = env.find(self._value)
-            # print 'res is ', res
-        elif self.stype == 'op':
+        elif stype == 'op':
             res = env.find(self._value)
-        elif self.stype == 'atom' or self.stype == 'func':
-            res = self.child[0].calc_value(env)
-        elif self.stype == 'lexp':
-            res = self.child[0].calc_value(env)
-            if self.child[0].stype == 'list':
+        elif stype == 'atom' or self.stype == 'func':
+            res = child[0].calc_value(env)
+        elif stype == 'lexp':
+            res = child[0].calc_value(env)
+            if child[0].stype == 'list':
                 res = [res, ]
                 res = args_restore(res)
-        elif self.stype == 'lexp-seq':
-            if len(self.child) > 1:
-                res = (self.child[0].calc_value(env), ) + self.child[1].calc_value(env)
+        elif stype == 'lexp-seq':
+            if len(child) > 1:
+                res = (child[0].calc_value(env), ) + child[1].calc_value(env)
             else:
-                res = (self.child[0].calc_value(env), )
+                res = (child[0].calc_value(env), )
             # print 'this lexp-seq:', res
-        elif self.stype == 'list':
-            if len(self.child) == 3:
-                res = self.child[1].calc_value(env)
+        elif stype == 'list':
+            if len(child) == 3:
+                res = child[1].calc_value(env)
             else:
                 res = tuple()
-        elif self.stype == 's-exp':
-            func = self.child[1].calc_value(env)
-            args = self.child[2].calc_value(env)
-            if len(self.child) == 3:
+        elif stype == 's-exp':
+            func = child[1].calc_value(env)
+            args = child[2].calc_value(env)
+            if len(child) == 3:
                 res = func()
             else:
                 res = func(*[args_restore(arg) for arg in args])
-            # print func
-            # print args
-        elif self.stype == 'define-exp':
+        elif stype == 'define-exp':
             # <define-exp> ::= <(> <define> <symbol> <lexp> <)>
-            symbol = self.child[2].child[0].raw_value
-            # env[symbol] = partial(dynamic_exp, self.child[3], env)
-            # env.dynamic_bind[symbol] = True
-            define(env, symbol, self.child[3])
+            symbol = child[2].child[0].raw_value
+            define(env, symbol, child[3])
             res = symbol
-        elif self.stype == 'args':
-            if self.child[0].stype == 'symbol':
-                res = (self.child[0].child[0].raw_value, )
+        elif stype == 'args':
+            if child[0].stype == 'symbol':
+                res = (child[0].child[0].raw_value, )
             else:
-                res = self.child[0].calc_value(env) + (self.child[1].child[0].raw_value, )
-        elif self.stype == 'proc-body':
-            if len(self.child) <= 1:
-                res = self.child[0].calc_value(env)
+                res = child[0].calc_value(env) + (child[1].child[0].raw_value, )
+        elif stype == 'proc-body':
+            if len(child) <= 1:
+                res = child[0].calc_value(env)
             else:
                 # 用语句块的最后一个语句作为语句块的值
-                _ = self.child[0].calc_value(env)
-                res = self.child[1].calc_value(env)
-        elif self.stype == 'lambda-exp':
+                _ = child[0].calc_value(env)
+                res = child[1].calc_value(env)
+        elif stype == 'lambda-exp':
             # <lambda-exp> ::= <(> <lambda> <(> <args> <)> <proc-body> <)>
-            args = self.child[3].calc_value(env)
-            body = self.child[5]
+            args = child[3].calc_value(env)
+            body = child[5]
             # print 'args: ', args
             # print 'body:', body
             res = Procedure(args, body, env)
-        elif self.stype == 'var-exps':
-            if len(self.child) == 4:
-                define(env, self.child[1].child[0].raw_value, self.child[2])
+        elif stype == 'var-exps':
+            if len(child) == 4:
+                define(env, child[1].child[0].raw_value, child[2])
             else:
-                self.child[0].calc_value(env)
-                define(env, self.child[2].child[0].raw_value, self.child[3])
-        elif self.stype == 'let-exp':
+                child[0].calc_value(env)
+                define(env, child[2].child[0].raw_value, child[3])
+        elif stype == 'let-exp':
             # <let-exp> ::= <(> <let> <(> <var-exps> <)> <proc-body> <)
             let_env = Env.std_env(outer=env)
-            self.child[3].calc_value(let_env)
-            res = self.child[5].calc_value(let_env)
-        elif self.stype == 'proc-define-exp':
+            child[3].calc_value(let_env)
+            res = child[5].calc_value(let_env)
+        elif stype == 'proc-define-exp':
             # <proc-define-exp> ::= <(> <define> <(> <symbol> <args> <)> <proc-body> <)>
             # <proc-define-exp> ::= <(> <define> <(> <symbol> <)> <proc-body> <)>
-            if len(self.child) > 7:
+            if len(child) > 7:
                 # 有参函数
-                symbol = self.child[3].child[0].raw_value
-                args = self.child[4].calc_value(env)
-                body = self.child[6]
+                symbol = child[3].child[0].raw_value
+                args = child[4].calc_value(env)
+                body = child[6]
                 proc = Procedure(args, body, env)
                 env[symbol] = proc
             else:
-                symbol = self.child[3].child[0].raw_value
+                symbol = child[3].child[0].raw_value
                 args = tuple()
-                body = self.child[5]
+                body = child[5]
                 proc = Procedure(args, body, env)
                 env[symbol] = proc
             if symbol in env.dynamic_bind:
                 # 如果之前是动态绑定key, 移除
                 del env.dynamic_bind[symbol]
             res = symbol
-        elif self.stype == 'predicate':
-            if self.child[0].calc_value(env):
+        elif stype == 'predicate':
+            if child[0].calc_value(env):
                 res = True
             else:
                 res = False
-        elif self.stype in ['consequent', 'alternate']:
-            res = self.child[0].calc_value(env)
-        elif self.stype == 'if-exp':
+        elif stype in ['consequent', 'alternate']:
+            res = child[0].calc_value(env)
+        elif stype == 'if-exp':
             # <if-exp> ::= <(> <if> <predicate> <consequent> <alternate> <)>
-            if self.child[2].calc_value(env):
-                res = self.child[3].calc_value(env)
+            if child[2].calc_value(env):
+                res = child[3].calc_value(env)
             else:
-                res = self.child[4].calc_value(env)
-        elif self.stype == 'or-exp':
+                res = child[4].calc_value(env)
+        elif stype == 'or-exp':
             # <or-exp> ::= <(> <or> <lexp-seq> <)>
-            cnode = self.child[2]
+            cnode = child[2]
             res = False
             while len(cnode.child) > 1:
                 val = cnode.child[0].calc_value(env)
@@ -327,9 +322,9 @@ class SExp(object):
                     val = args_restore(val)
                 if val:
                     res = val
-        elif self.stype == 'and-exp':
+        elif stype == 'and-exp':
             # <and-exp> ::= <(> <and> <lexp-seq> <)>
-            cnode = self.child[2]
+            cnode = child[2]
             res = True
             while len(cnode.child) > 1:
                 val = cnode.child[0].calc_value(env)

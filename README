@@ -1,7 +1,10 @@
-### 编译器课设
+ ### 编译原理课设
 
 尽可能靠近scheme的一门语言.
 
+当然编译原理和scheme都是初入门, 理解很浅
+
+```scheme
 486                             ; 表达式
 (+ 137 349)                     ; 组合式
 (+ (* 3 5) (- 10 6))            ; 组合式
@@ -22,4 +25,5 @@
 
 (if (> x 0) (define y x) 2)     ; if表达式 (if test-expr then-expr else-expr) (这个还是用函数实现比较好)
 (lambda (x) (+ x 5))            ; lambda表达式 (lambda kw-formals body ...+)
+```
 

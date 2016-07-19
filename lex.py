@@ -1,11 +1,10 @@
 # coding: utf-8
 
-import pdb
 from collections import defaultdict
 from Queue import Queue
 
 from regex import Regex
-from fa import NFA, DFA, NFANode, DFANode
+from fa import NFA, DFA, NFANode
 from util import bnf_reader
 
 
@@ -132,9 +131,7 @@ class Lex(object):
                             node.next[r_hand[0]].add(end_node)
                 nfas.append(nfa)
             nfa = NFA.combine(*nfas)
-            nfa.draw("regular", show_meta=True)
             self.lex_dfa = nfa.convert_dfa(copy_meta=["type"])
-            self.lex_dfa.draw(show_meta=["type"])
             return
 
     def lex(self, code, ignore=None):
@@ -156,33 +153,8 @@ class Lex(object):
 
 
 if __name__ == '__main__':
-    # nfas = []
-    # nfas.append(Regex.compile_nfa("[a-z][a-z0-9]*", extend=True, type="identifier"))
-    # nfas.append(Regex.compile_nfa("\(", extend=True, type="lpl"))
-    # nfas.append(Regex.compile_nfa("\)", extend=False, type="rpl"))
-    # nfas.append(Regex.compile_nfa("(\+|-|\*|/)", type="op"))
-    # nfas.append(Regex.compile_nfa("[ \t\n]", extend=True, type="limit"))
-    # nfas.append(Regex.compile_nfa("[0-9][0-9]*", extend=True, type="number"))
-    # nfa = NFA.combine(*nfas)
-    # nfa.draw()
-    # dfa = nfa.convert_dfa(copy_meta=["type"])
-    # dfa.draw(show_meta=False)
-    # print 'compile dfa done!'
-    # while True:
-    #     search(dfa, raw_input(), test_handler)
-
-
-    # l = Lex()
-    # l.read_lex("regex_lex.txt")
-    # l.compile()
-    # print 'compile complete!'
-    # while True:
-    #     print l.lex(raw_input(), ignore=["limit"])
-
     l = Lex()
     l.read_lex("regex_lex.txt")
     l.compile()
-    # l.compile(grammar_type="regular")
-    # l.lex_dfa.draw()
     while True:
         print l.lex(raw_input(), ignore=["limit"])

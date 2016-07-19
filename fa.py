@@ -1,12 +1,11 @@
 # coding: utf-8
 
 from Queue import Queue
-import pdb
 
 from util import unions
-import crash_on_ipy
+# import crash_on_ipy
 
-crash_on_ipy.init()
+# crash_on_ipy.init()
 
 
 class BaseNode(object):
@@ -87,7 +86,6 @@ def closure(nodes):
     return res
 
 
-#@profile
 def move(t_nodes, a):
     """
     :param t_nodes: T
@@ -101,16 +99,6 @@ class NFA(FA):
 
     def __init__(self):
         super(NFA, self).__init__(node_type=NFANode)
-
-    # def __getitem__(self, item):
-    #     return self.node_list[item]
-    #
-    # def __setitem__(self, key, value):
-    #     self.node_list[key] = value
-    #
-    # def __len__(self):
-    #     #return len(self.node_list)
-    #     return self.cnt
 
     def convert_dfa(self, copy_meta=None):
         """
@@ -158,6 +146,11 @@ class NFA(FA):
         return res
 
     def draw(self, filename="nfa", show_meta=False):
+        """
+        :param filename:
+        :param show_meta:
+        :return: draw a dot file which can be shown by graphviz
+        """
         que = Queue()
         que.put(self.start)
         vis = dict()
@@ -201,20 +194,6 @@ class DFA(FA):
     def __init__(self):
         super(DFA, self).__init__(node_type=DFANode)
 
-    def debug(self):
-        que = Queue()
-        que.put(self.start)
-        vis = dict()
-        while not que.empty():
-            tmp = que.get()
-            if tmp in vis:
-                continue
-            vis[tmp] = 1
-            print tmp.meta["id"], [("- " + key + " ->"+tmp.next[key].meta["id"].__str__(), id(tmp.next[key])) for key in tmp.next.keys()]
-            for x in [tmp.next[key] for key in tmp.next.keys()]:
-                que.put(x)
-        print 'end: ', self.end
-
     def generate_id(self):
         que = Queue()
         que.put(self.start)
@@ -229,55 +208,3 @@ class DFA(FA):
             cnt += 1
             for x in tmp.nexts:
                 que.put(x)
-
-    def draw(self, filename="dfa", show_meta=None, generate_id=True):
-        if not show_meta:
-            show_meta = []
-        if generate_id:
-            self.generate_id()
-        que = Queue()
-        que.put(self.start)
-        vis = dict()
-        with open(filename+'.dot', 'wt') as f:
-            f.write('digraph regex_dfa{\nrankdir=LR;\n')
-            while not que.empty():
-                tmp = que.get()
-                if tmp in vis:
-                    continue
-                vis[tmp] = 1
-                if tmp.end:
-                    if show_meta:
-                        f.write('\t %d [label="%d [%s]", shape=doublecircle]\n' % (tmp.id, tmp.id, repr({key: tmp.meta[key] for key in show_meta if key != 'nfa_set'})))
-                    else:
-                        f.write('\t %d [label="%d", shape=doublecircle]\n' % (tmp.id, tmp.id))
-                else:
-                    if show_meta and len(show_meta) == sum(1 for m in show_meta if m in tmp.meta):
-                        f.write('\t%d [label="%d %s"]\n' % (tmp.id, tmp.id, repr({key: tmp.meta[key] for key in show_meta if key != 'nfa_set'})))
-                    else:
-                        f.write('\t%d [label=%d]\n' % (tmp.id, tmp.id))
-                for key in tmp.next.keys():
-                    x = tmp.next[key]
-                    f.write('\t%d-> %d [label="%s"]\n' % (tmp.id, x.id, key))
-                    que.put(x)
-            f.write('}\n')
-
-
-if __name__ == '__main__':
-    nfa = NFA()
-    nfa.start = NFANode(id=1)
-    t1, t2 = NFANode(id=2), NFANode(id=3)
-    t3 = NFANode(id=4)
-    nfa.start.next["ep"] = {t1, t2}
-    t1.next["a"] = t2.next["b"] = {t3}
-    t3.end = True
-    nfa.end.add(t3)
-    print "nfa end:", nfa.end
-    #print nfa.start.next.keys()
-    #print t1.next.keys(), t2.next.keys(), t3.next.keys()
-    s0 = closure(nfa.start)
-    #print t1.next.keys(), t2.next.keys(), t3.next.keys()
-    #print [(node.next.keys(), node.meta["id"], [t.meta["id"] for t in node.next.get("ep", set())]) for node in s0]
-    dfa = nfa.convert_dfa()
-    print dfa.start, dfa.start.next.keys()
-    dfa.debug()
-    dfa.draw()

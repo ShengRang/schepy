@@ -1,5 +1,5 @@
 
-# 动态绑定
+# 延迟求值
 (+ (* 3 5) (- 10 6))
 (define size 2)
 (define x 3)
@@ -10,7 +10,6 @@
 a
 
 
-'''
 # 实现filter
 (define (filter fun s) (define first (car s))
   (if (= (length s) 1)
@@ -18,10 +17,9 @@ a
     (if (fun first) (append [first]  (filter fun (cdr s))) (filter fun (cdr s)))
   )
 )
-'''
+
 
 # 快排
-'''
 (define quick-sort
   (lambda (s)
     (if (< (length s) 2)
@@ -34,4 +32,3 @@ a
     )
   )
 )
-'''
